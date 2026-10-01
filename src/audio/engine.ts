@@ -89,6 +89,16 @@ export function playSequence(midis: readonly number[], timbre: Timbre, noteDurat
   return midis.length * (noteDuration + gap);
 }
 
+export function playTimedSequence(midis: readonly number[], timbre: Timbre, durations: readonly number[]): number {
+  let cursor = 0;
+  midis.forEach((midi, index) => {
+    const duration = durations[index] ?? 0.55;
+    playTone({ midi, timbre, delay: cursor, duration });
+    cursor += duration + 0.08;
+  });
+  return cursor;
+}
+
 export function playMetronome(bpm: 60 | 72 | 84, beats = 8): void {
   const interval = 60 / bpm;
   for (let index = 0; index < beats; index += 1) {

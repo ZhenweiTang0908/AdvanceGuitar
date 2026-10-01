@@ -19,8 +19,8 @@ function phraseLengthForDay(day: number): number {
   if (day <= 2) return 2;
   if (day <= 7) return 3;
   if (day <= 14) return 4;
-  if (day <= 20) return 5;
-  return 6;
+  const lengths: Record<number, number> = { 15: 4, 16: 5, 17: 5, 18: 5, 19: 4, 20: 6, 21: 5, 22: 5, 23: 6, 24: 6, 25: 5, 26: 5, 27: 6, 28: 5 };
+  return lengths[day] ?? 5;
 }
 
 function timbresForDay(day: number): readonly Timbre[] {

@@ -7,6 +7,12 @@ const rawDays = import.meta.glob("/content/stage-1/day-*.md", {
   eager: true,
 }) as Record<string, string>;
 
+const rawOverview = import.meta.glob("/content/stage-1-overview.md", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
 interface Frontmatter {
   day: number;
   week: number;
@@ -76,3 +82,5 @@ export const curriculumDays: readonly CurriculumDay[] = Object.entries(rawDays)
 export function getCurriculumDay(day: number): CurriculumDay | undefined {
   return curriculumDays.find((candidate) => candidate.day === day);
 }
+
+export const stageOverviewMarkdown = Object.values(rawOverview)[0] ?? "";

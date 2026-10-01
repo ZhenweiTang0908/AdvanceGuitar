@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "check": "npm run lint && npm run test && npm run build"
+    "validate:content": "node scripts/validate-content.mjs",
+    "check": "npm run validate:content && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
     "lucide-react": "^1.49.0",

@@ -1,6 +1,7 @@
 import { PITCH_NOTES, noteByName, type NoteName, type Timbre } from "../types/music";
 import type { ExerciseDefinition } from "../types/curriculum";
 import { pickSeeded, seededRandom, shuffleSeeded } from "./random";
+import { phrasesFor } from "./phraseBank";
 
 export interface NoteQuestion {
   id: string;
@@ -12,6 +13,7 @@ export interface NoteQuestion {
 export interface PhraseQuestion {
   id: string;
   target: readonly NoteName[];
+  rhythm: readonly number[];
   timbre: Timbre;
 }
 
@@ -48,10 +50,13 @@ export function buildNoteQuestions(exercise: ExerciseDefinition): NoteQuestion[]
 
 export function buildPhraseQuestions(exercise: ExerciseDefinition): PhraseQuestion[] {
   const random = seededRandom(`${exercise.id}:phrases`);
+  const partition = exercise.assessment ? "reserved" : "daily";
+  const candidates = phrasesFor(exercise.phraseLength, exercise.notePool, partition);
+  const ordered = shuffleSeeded(candidates, `${exercise.id}:phrase-order`);
   return Array.from({ length: exercise.rounds }, (_, index) => {
-    const target = Array.from({ length: exercise.phraseLength }, () => pickSeeded(exercise.notePool, random));
-    if (target.every((note) => note === target[0])) target[target.length - 1] = pickSeeded(exercise.notePool.filter((note) => note !== target[0]), random);
-    return { id: `${exercise.id}-phrase-${index + 1}`, target, timbre: pickTimbre(exercise.timbres, random) };
+    const entry = ordered[index % Math.max(ordered.length, 1)];
+    if (!entry) throw new Error(`No ${exercise.phraseLength}-note phrases available for exercise ${exercise.id}`);
+    return { id: `${exercise.id}-phrase-${index + 1}`, target: entry.notes, rhythm: entry.rhythm, timbre: pickTimbre(exercise.timbres, random) };
   });
 }
 
