@@ -5,7 +5,7 @@ import { ExerciseCard } from "../components/ExerciseCard";
 import { MarkdownView } from "../components/MarkdownView";
 import { PageHeader } from "../components/PageHeader";
 import { getCurriculumDay } from "../content/loadCurriculum";
-import { getExercisesForDay } from "../data/exercises";
+import { getExercise } from "../data/exercises";
 import { weakestDomain } from "../progress/logic";
 import { completedExerciseIds } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
@@ -15,9 +15,6 @@ export function DayPage() {
   const dayNumber = Number(params.day);
   const day = getCurriculumDay(dayNumber);
   const { snapshot, saveDailyLog } = useProgress();
-  const exercises = getExercisesForDay(dayNumber);
-  const remedial = exercises.length > 0 ? `remedial-${weakestDomain(snapshot.results)}` : undefined;
-  const completed = completedExerciseIds(snapshot);
 
   if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 28) return <Navigate to="/stage/1" replace />;
   if (!day) {
@@ -27,6 +24,10 @@ export function DayPage() {
       </div>
     );
   }
+
+  const exercises = day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise));
+  const remedial = exercises.length > 0 ? `remedial-${weakestDomain(snapshot.results)}` : undefined;
+  const completed = completedExerciseIds(snapshot);
 
   return (
     <div className="page">

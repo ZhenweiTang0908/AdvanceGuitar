@@ -1,4 +1,4 @@
-import { createEmptySnapshot, domainStats, weakestDomain } from "./logic";
+import { createEmptySnapshot, domainStats, validateSnapshot, weakestDomain } from "./logic";
 import type { ExerciseResult } from "../types/progress";
 
 function result(skill: ExerciseResult["skill"], correct: boolean, attempts: number): ExerciseResult {
@@ -27,5 +27,10 @@ describe("progress logic", () => {
       result("fretboard", true, 1),
     ]);
     expect(weakest).toBe("ear");
+  });
+
+  it("rejects incompatible progress files instead of accepting them", () => {
+    expect(validateSnapshot({ ...createEmptySnapshot(), version: 2 })).toEqual({ ok: false, error: "进度文件版本不受支持" });
+    expect(validateSnapshot({ version: 1, curriculumVersion: "stage-1-v1", results: [], dailyLogs: {}, settings: { answerMode: "manual", volume: 2, preferredTimbre: "mixed" } }).ok).toBe(false);
   });
 });

@@ -4,7 +4,7 @@ import { ExerciseCard } from "../components/ExerciseCard";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
 import { curriculumDays, getCurriculumDay } from "../content/loadCurriculum";
-import { getExercisesForDay } from "../data/exercises";
+import { getExercise, getExercisesForDay } from "../data/exercises";
 import { calculateStreak, nextRecommendedDay } from "../progress/logic";
 import { completedDayCount, completedExerciseIds, dayCompletion } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
@@ -13,7 +13,9 @@ export function HomePage() {
   const { snapshot } = useProgress();
   const nextDay = nextRecommendedDay(snapshot.dailyLogs);
   const day = getCurriculumDay(nextDay);
-  const exercises = getExercisesForDay(nextDay);
+  const exercises = day
+    ? day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise))
+    : getExercisesForDay(nextDay);
   const completed = completedExerciseIds(snapshot);
   const completion = dayCompletion(snapshot, nextDay);
   const stageComplete = completedDayCount(snapshot);
