@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, Headphones, Mic, RotateCcw, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
-import { playCadence, playChord, playTimedSequence, playTone, resumeAudio } from "../audio/engine";
+import { playChord, playTimedSequence, playTone, resumeAudio } from "../audio/engine";
 import { isWithinTolerance } from "../audio/pitchDetection";
 import { PageHeader } from "../components/PageHeader";
 import { getExercise } from "../data/exercises";
@@ -128,8 +128,13 @@ function NoteRound({ exercise, roundIndex, onRound }: { exercise: ExerciseDefini
   async function playReference() {
     microphone.stop();
     await resumeAudio();
-    playCadence();
-    playTone({ midi: noteByName(question.target).midi, timbre: question.timbre, delay: 3.25, duration: 0.9, volume: snapshot.settings.volume });
+    playTone({ midi: noteByName(question.target).midi, timbre: question.timbre, delay: 0.15, duration: 0.9, volume: snapshot.settings.volume });
+  }
+
+  async function playTonicReference() {
+    microphone.stop();
+    await resumeAudio();
+    playTone({ midi: 60, timbre: "piano", delay: 0.1, duration: 1, volume: snapshot.settings.volume });
   }
 
   function answer(note: NoteName) {
@@ -147,10 +152,13 @@ function NoteRound({ exercise, roundIndex, onRound }: { exercise: ExerciseDefini
   return (
     <section className="practice-panel panel">
       <div className="practice-panel__header">
-        <div><p className="eyebrow">Listen · hum · find</p><h2>先听定调，再找目标音</h2></div>
-        <button className="button button--primary" type="button" onClick={() => void playReference()}><Headphones size={17} />播放定调与目标音</button>
+        <div><p className="eyebrow">Listen · hum · find</p><h2>先听目标音，再在琴上找</h2></div>
+        <div className="button-row">
+          <button className="button button--quiet" type="button" onClick={() => void playTonicReference()}>单独听 C</button>
+          <button className="button button--primary" type="button" onClick={() => void playReference()}><Headphones size={17} />播放目标音</button>
+        </div>
       </div>
-      <p className="practice-instruction">听完先哼出来，在琴上试音，再提交你找到的音。答错只会告诉你偏高还是偏低。</p>
+      <p className="practice-instruction">不播放伴奏。听完目标音先哼出来，在琴上试音，再提交你找到的音。答错只会告诉你偏高还是偏低。</p>
       <div className="answer-grid">
         {question.choices.map((note) => <button className="note-button" type="button" key={note} onClick={() => answer(note)}>{note}<small>{noteByName(note).degree} 级</small></button>)}
       </div>
@@ -200,9 +208,14 @@ function PhraseRound({ exercise, roundIndex, onRound }: { exercise: ExerciseDefi
   async function playReference() {
     microphone.stop();
     await resumeAudio();
-    playCadence();
-    const delay = 3.3 + playTimedSequence(question.target.map((note) => noteByName(note).midi), question.timbre, question.rhythm, 3.3);
+    const delay = 0.15 + playTimedSequence(question.target.map((note) => noteByName(note).midi), question.timbre, question.rhythm, 0.15);
     return delay;
+  }
+
+  async function playTonicReference() {
+    microphone.stop();
+    await resumeAudio();
+    playTone({ midi: 60, timbre: "piano", delay: 0.1, duration: 1, volume: snapshot.settings.volume });
   }
 
   function submit() {
@@ -223,9 +236,12 @@ function PhraseRound({ exercise, roundIndex, onRound }: { exercise: ExerciseDefi
     <section className="practice-panel panel">
       <div className="practice-panel__header">
         <div><p className="eyebrow">Phrase · {question.target.length} notes</p><h2>记住轮廓，再逐个放回去</h2></div>
-        <button className="button button--primary" type="button" onClick={() => void playReference()}><Headphones size={17} />播放短句</button>
+        <div className="button-row">
+          <button className="button button--quiet" type="button" onClick={() => void playTonicReference()}>单独听 C</button>
+          <button className="button button--primary" type="button" onClick={() => void playReference()}><Headphones size={17} />播放短句</button>
+        </div>
       </div>
-      <p className="practice-instruction">先听完整短句并哼出来。短句只判音高顺序，节奏跟弹即可。</p>
+      <p className="practice-instruction">不播放伴奏。先听完整短句并哼出来；需要 C 的参照时再点“单独听 C”。短句只判音高顺序，节奏跟弹即可。</p>
       <div className="phrase-slots">
         {question.target.map((_, index) => <span className={answer[index] ? "is-filled" : ""} key={`${question.id}-slot-${index}`}>{answer[index] ?? "?"}</span>)}
       </div>
