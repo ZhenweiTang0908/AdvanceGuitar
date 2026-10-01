@@ -13,7 +13,7 @@ export function dayCompletion(snapshot: ProgressSnapshot, day: number): { comple
   const exercises = getExercisesForDay(day);
   const completed = completedExerciseIds(snapshot);
   const completedCount = exercises.filter((exercise) => completed.has(exercise.id)).length;
-  const hasRemedial = snapshot.results.some((result) => result.exerciseId.startsWith("remedial-") && result.day === day);
+  const hasRemedial = allExercises.some((exercise) => exercise.remedial && snapshot.results.filter((result) => result.exerciseId === exercise.id && result.day === day).length >= exercise.rounds);
   const hasLog = Boolean(snapshot.dailyLogs[day]?.completedAt);
   const complete = completedCount === exercises.length && hasRemedial && hasLog;
   const started = completedCount > 0 || hasRemedial || hasLog;
