@@ -3,6 +3,13 @@ export type ScaleDegree = 1 | 2 | 3 | 5 | 6;
 export type Timbre = "piano" | "guitar" | "pure";
 export type SkillDomain = "ear" | "phrase" | "fretboard" | "chord";
 
+export interface AudioSequence {
+  midis: readonly number[];
+  durations: readonly number[];
+  timbre: Timbre;
+  reference: "none" | "cadence" | "tonic";
+}
+
 export interface PitchNote {
   name: NoteName;
   degree: ScaleDegree;
@@ -34,4 +41,12 @@ export function frequencyForName(name: NoteName): number {
 
 export function midpointNote(first: NoteName, second: NoteName): number {
   return (noteByName(first).midi + noteByName(second).midi) / 2;
+}
+
+const CHROMATIC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+export function midiForRootName(root: string, octave = 3): number {
+  const semitone = CHROMATIC[root];
+  if (semitone === undefined) throw new Error(`Unsupported root note: ${root}`);
+  return 12 * (octave + 1) + semitone;
 }

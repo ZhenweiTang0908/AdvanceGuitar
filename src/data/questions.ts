@@ -36,7 +36,7 @@ function pickTimbre(timbres: readonly Timbre[], random: () => number): Timbre {
 }
 
 export function buildNoteQuestions(exercise: ExerciseDefinition): NoteQuestion[] {
-  const random = seededRandom(`${exercise.id}:notes`);
+  const random = seededRandom(`${exercise.id}:notes:${exercise.assessment ? "reserved" : "daily"}`);
   return Array.from({ length: exercise.rounds }, (_, index) => {
     const target = pickSeeded(exercise.notePool, random);
     return {
@@ -99,7 +99,7 @@ export function buildFretboardQuestions(exercise: ExerciseDefinition): Fretboard
     });
   }
 
-  return shuffleSeeded(prompts, `${exercise.id}:fretboard-order`).slice(0, exercise.rounds).map((question, index) => ({
+  return shuffleSeeded(prompts, `${exercise.id}:fretboard-order:${exercise.assessment ? "reserved" : "daily"}`).slice(0, exercise.rounds).map((question, index) => ({
     ...question,
     id: `${exercise.id}-fret-question-${index + 1}`,
   }));
@@ -108,7 +108,7 @@ export function buildFretboardQuestions(exercise: ExerciseDefinition): Fretboard
 const CHORD_ROOTS = ["F", "G", "A", "B", "C", "D", "E"] as const;
 
 export function buildChordQuestions(exercise: ExerciseDefinition): ChordQuestion[] {
-  const random = seededRandom(`${exercise.id}:chords`);
+  const random = seededRandom(`${exercise.id}:chords:${exercise.assessment ? "reserved" : "daily"}`);
   return Array.from({ length: exercise.rounds }, (_, index) => {
     const root = pickSeeded(CHORD_ROOTS, random);
     const isMinor = random() > 0.5;

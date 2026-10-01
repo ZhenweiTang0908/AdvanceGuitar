@@ -19,6 +19,8 @@ export interface DailyLog {
   completedAt?: string;
 }
 
+export type DailyStatus = "not_started" | "in_progress" | "completed";
+
 export interface UserSettings {
   answerMode: "manual" | "microphone";
   volume: number;

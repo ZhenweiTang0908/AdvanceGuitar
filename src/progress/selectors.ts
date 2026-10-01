@@ -9,13 +9,15 @@ export function completedExerciseIds(snapshot: ProgressSnapshot): Set<string> {
   return new Set(allExercises.filter((exercise) => (counts.get(exercise.id) ?? 0) >= exercise.rounds).map((exercise) => exercise.id));
 }
 
-export function dayCompletion(snapshot: ProgressSnapshot, day: number): { complete: boolean; completed: number; total: number; hasLog: boolean } {
+export function dayCompletion(snapshot: ProgressSnapshot, day: number): { complete: boolean; status: "not_started" | "in_progress" | "completed"; completed: number; total: number; hasLog: boolean } {
   const exercises = getExercisesForDay(day);
   const completed = completedExerciseIds(snapshot);
   const completedCount = exercises.filter((exercise) => completed.has(exercise.id)).length;
   const hasRemedial = snapshot.results.some((result) => result.exerciseId.startsWith("remedial-") && result.day === day);
   const hasLog = Boolean(snapshot.dailyLogs[day]?.completedAt);
-  return { complete: completedCount === exercises.length && hasRemedial && hasLog, completed: completedCount + (hasRemedial ? 1 : 0), total: exercises.length + 1, hasLog };
+  const complete = completedCount === exercises.length && hasRemedial && hasLog;
+  const started = completedCount > 0 || hasRemedial || hasLog;
+  return { complete, status: complete ? "completed" : started ? "in_progress" : "not_started", completed: completedCount + (hasRemedial ? 1 : 0), total: exercises.length + 1, hasLog };
 }
 
 export function completedDayCount(snapshot: ProgressSnapshot): number {

@@ -1,13 +1,13 @@
 import { ArrowLeft, ArrowRight, Check, Headphones, Mic, RotateCcw, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
-import { playCadence, playTimedSequence, playTone, resumeAudio } from "../audio/engine";
+import { playCadence, playChord, playTimedSequence, playTone, resumeAudio } from "../audio/engine";
 import { isWithinTolerance } from "../audio/pitchDetection";
 import { PageHeader } from "../components/PageHeader";
 import { getExercise } from "../data/exercises";
 import { buildChordQuestions, buildFretboardQuestions, buildNoteQuestions, buildPhraseQuestions } from "../data/questions";
 import { usePitchCapture } from "../hooks/usePitchCapture";
-import { noteByName, PITCH_NOTES, type NoteName } from "../types/music";
+import { midiForRootName, noteByName, PITCH_NOTES, type NoteName } from "../types/music";
 import type { ExerciseDefinition } from "../types/curriculum";
 import { useProgress } from "../progress/ProgressProvider";
 
@@ -265,10 +265,21 @@ function ChoiceRound({ exercise, roundIndex, onRound, direction }: { exercise: E
     setFeedback(`“${choice}”还不对。回到根音位置，重新数一下音程关系。`);
   }
 
+  async function playChordReference() {
+    if (direction !== "chord") return;
+    await resumeAudio();
+    const rootName = question.answer.charAt(0);
+    const minor = question.answer.endsWith("m");
+    const root = midiForRootName(rootName);
+    playTone({ midi: root, timbre: "guitar", duration: 0.7 });
+    playChord([root, root + (minor ? 3 : 4), root + 7], "guitar", 1.1, 0.1);
+  }
+
   return (
     <section className="practice-panel panel">
       <div className="practice-panel__header">
         <div><p className="eyebrow">{direction === "fretboard" ? "Fretboard" : "Chord shape"}</p><h2>{question.prompt}</h2></div>
+        {direction === "chord" ? <button className="button button--secondary" type="button" onClick={() => void playChordReference()}><Volume2 size={16} />播放参考和弦</button> : null}
       </div>
       <div className="choice-answer-grid">
         {question.choices.map((choice) => <button className="choice-button" type="button" key={choice} onClick={() => answer(choice)}>{choice}</button>)}
