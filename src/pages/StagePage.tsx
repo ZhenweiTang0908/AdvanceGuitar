@@ -24,7 +24,12 @@ export function StagePage() {
         title="把声音连接到一小块指板"
         description={`当前完成 ${completed} 天。课程按顺序推荐但不硬锁，你可以在同一天同时推进听觉、指板、短句和和弦。`}
       />
-      {stageOverviewMarkdown ? <section className="content-section panel"><MarkdownView markdown={stageOverviewMarkdown} /></section> : null}
+      {stageOverviewMarkdown ? (
+        <details className="study-notes stage-overview">
+          <summary>阶段说明 <span>四周路线与完成标准</span></summary>
+          <div className="study-notes__body"><MarkdownView markdown={stageOverviewMarkdown} /></div>
+        </details>
+      ) : null}
       {curriculumDays.length === 0 ? (
         <section className="panel empty-state">
           <LockKeyhole aria-hidden="true" size={24} />

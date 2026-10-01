@@ -58,7 +58,6 @@ export function ExercisePage() {
       <PageHeader
         eyebrow={exercise.remedial ? "Adaptive practice" : `Week ${Math.ceil(exercise.day / 7)} · Day ${exercise.day}`}
         title={exercise.title}
-        description={exercise.description}
         actions={<Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}><ArrowLeft size={16} />返回</Link>}
       />
       {finished ? (

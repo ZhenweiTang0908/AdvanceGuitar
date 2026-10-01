@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Clock3, Music2 } from "lucide-react";
+import { ArrowLeft, Clock3, Music2 } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { DailyReflection } from "../components/DailyReflection";
 import { ExerciseCard } from "../components/ExerciseCard";
@@ -54,15 +54,15 @@ export function DayPage() {
         </div>
       </section>
 
-      <section className="content-section two-column">
-        <article className="panel">
-          <MarkdownView markdown={day.body} />
-        </article>
-        <aside className="day-sidebar">
-          <DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={saveDailyLog} />
-          {day.day < 28 ? <Link className="button button--secondary button--block" to={`/day/${day.day + 1}`}>查看下一天 <ArrowRight size={16} /></Link> : <Link className="button button--primary button--block" to="/progress">查看阶段进度 <ArrowRight size={16} /></Link>}
-        </aside>
-      </section>
+      <details className="study-notes">
+        <summary>今日讲义 <span>按需展开</span></summary>
+        <div className="study-notes__body"><MarkdownView markdown={day.body} /></div>
+      </details>
+
+      <details className="study-notes reflection-notes" open={Boolean(snapshot.dailyLogs[day.day]?.completedAt)}>
+        <summary>完成后复盘 <span>三个问题</span></summary>
+        <div className="study-notes__body"><DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={saveDailyLog} /></div>
+      </details>
     </div>
   );
 }

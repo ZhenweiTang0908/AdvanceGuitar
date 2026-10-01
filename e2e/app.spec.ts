@@ -11,7 +11,7 @@ test("opens the first day and enters a practice", async ({ page }) => {
 test("renders the curriculum overview and mobile navigation", async ({ page }) => {
   await page.goto("/stage/1");
   await expect(page.getByRole("heading", { name: "把声音连接到一小块指板" })).toBeVisible();
-  await expect(page.getByText("第一阶段总览")).toBeVisible();
+  await expect(page.getByText("阶段说明")).toBeVisible();
   const navigationName = (page.viewportSize()?.width ?? 0) < 760 ? "移动端主导航" : "主导航";
   await expect(page.getByRole("navigation", { name: navigationName })).toBeVisible();
 });

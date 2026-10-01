@@ -16,7 +16,6 @@ export function ExerciseCard({ exercise, completed = false }: ExerciseCardProps)
       <span className="exercise-card__copy">
         <small>{exercise.skill === "ear" ? "听音" : exercise.skill === "phrase" ? "短句" : exercise.skill === "fretboard" ? "指板" : "和弦"}</small>
         <strong>{exercise.title}</strong>
-        <span>{exercise.description}</span>
       </span>
       <span className="exercise-card__meta">{exercise.rounds} 题 <ArrowRight aria-hidden="true" size={16} /></span>
     </Link>
