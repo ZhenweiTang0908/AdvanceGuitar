@@ -89,8 +89,8 @@ export function playSequence(midis: readonly number[], timbre: Timbre, noteDurat
   return midis.length * (noteDuration + gap);
 }
 
-export function playTimedSequence(midis: readonly number[], timbre: Timbre, durations: readonly number[]): number {
-  let cursor = 0;
+export function playTimedSequence(midis: readonly number[], timbre: Timbre, durations: readonly number[], delay = 0): number {
+  let cursor = delay;
   midis.forEach((midi, index) => {
     const duration = durations[index] ?? 0.55;
     playTone({ midi, timbre, delay: cursor, duration });

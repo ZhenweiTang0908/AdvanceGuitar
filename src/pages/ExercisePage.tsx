@@ -201,7 +201,7 @@ function PhraseRound({ exercise, roundIndex, onRound }: { exercise: ExerciseDefi
     microphone.stop();
     await resumeAudio();
     playCadence();
-    const delay = 3.3 + playTimedSequence(question.target.map((note) => noteByName(note).midi), question.timbre, question.rhythm);
+    const delay = 3.3 + playTimedSequence(question.target.map((note) => noteByName(note).midi), question.timbre, question.rhythm, 3.3);
     return delay;
   }
 
