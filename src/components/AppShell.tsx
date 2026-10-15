@@ -1,13 +1,6 @@
-import {
-  AudioLines,
-  BookOpen,
-  ChartNoAxesCombined,
-  CircleHelp,
-  Guitar,
-  Library,
-  Settings,
-} from "lucide-react";
+import { AudioLines, BookOpen, ChartNoAxesCombined, CircleHelp, Library, Settings } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
+import { MascotPicko } from "./MascotPicko";
 
 const primaryNavigation: readonly { to: string; label: string; icon: typeof AudioLines; end?: boolean }[] = [
   { to: "/", label: "今天", icon: AudioLines, end: true },
@@ -21,8 +14,8 @@ export function AppShell() {
     <div className="app-shell">
       <aside className="sidebar">
         <NavLink className="brand" to="/" aria-label="听见指板首页">
-          <span className="brand__mark"><Guitar aria-hidden="true" size={22} /></span>
-          <span><strong>听见指板</strong><small>Guitar Ear Lab</small></span>
+          <MascotPicko mood="cheer" size={38} />
+          <span><strong>听见指板</strong><small>PICKO EAR LAB</small></span>
         </NavLink>
         <nav className="primary-nav" aria-label="主导航">
           {primaryNavigation.map(({ to, label, icon: Icon, end }) => (

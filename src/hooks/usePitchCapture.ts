@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { detectPitch, type DetectedPitch } from "../audio/pitchDetection";
 
-type MicrophoneState = "idle" | "requesting" | "listening" | "unsupported" | "denied" | "error";
+export type MicrophoneState = "idle" | "requesting" | "listening" | "unsupported" | "denied" | "error";
 
-interface PitchCaptureResult {
+export interface PitchCaptureResult {
   state: MicrophoneState;
   pitch: DetectedPitch | null;
   error: string | null;
@@ -11,6 +11,7 @@ interface PitchCaptureResult {
   stop: () => void;
   stablePitch: DetectedPitch | null;
   consumeStablePitch: () => void;
+  suppressDetection: (durationMs: number) => void;
 }
 
 export function usePitchCapture(): PitchCaptureResult {
@@ -22,8 +23,11 @@ export function usePitchCapture(): PitchCaptureResult {
   const contextRef = useRef<AudioContext | null>(null);
   const frameRef = useRef<number | null>(null);
   const stableFramesRef = useRef(0);
+  const requestIdRef = useRef(0);
+  const detectionSuppressedUntilRef = useRef(0);
 
   const stop = useCallback(() => {
+    requestIdRef.current += 1;
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -42,10 +46,16 @@ export function usePitchCapture(): PitchCaptureResult {
       setError("麦克风识别需要 localhost 或 HTTPS，以及支持 Web Audio 的浏览器。");
       return;
     }
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setState("requesting");
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      if (requestId !== requestIdRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       const context = new AudioContext();
       await context.resume();
       const source = context.createMediaStreamSource(stream);
@@ -59,6 +69,13 @@ export function usePitchCapture(): PitchCaptureResult {
 
       const loop = () => {
         analyser.getFloatTimeDomainData(samples);
+        if (Date.now() < detectionSuppressedUntilRef.current) {
+          stableFramesRef.current = 0;
+          setPitch(null);
+          setStablePitch(null);
+          frameRef.current = requestAnimationFrame(loop);
+          return;
+        }
         const detected = detectPitch(samples, context.sampleRate);
         setPitch(detected);
         if (detected) {
@@ -71,6 +88,7 @@ export function usePitchCapture(): PitchCaptureResult {
       };
       loop();
     } catch (caught) {
+      if (requestId !== requestIdRef.current) return;
       const message = caught instanceof Error ? caught.message : "无法打开麦克风";
       setState(message.toLowerCase().includes("denied") || message.toLowerCase().includes("permission") ? "denied" : "error");
       setError(message);
@@ -82,7 +100,14 @@ export function usePitchCapture(): PitchCaptureResult {
     setStablePitch(null);
   }, []);
 
+  const suppressDetection = useCallback((durationMs: number) => {
+    detectionSuppressedUntilRef.current = Date.now() + durationMs;
+    stableFramesRef.current = 0;
+    setPitch(null);
+    setStablePitch(null);
+  }, []);
+
   useEffect(() => stop, [stop]);
 
-  return { state, pitch, stablePitch, error, start, stop, consumeStablePitch };
+  return { state, pitch, stablePitch, error, start, stop, consumeStablePitch, suppressDetection };
 }

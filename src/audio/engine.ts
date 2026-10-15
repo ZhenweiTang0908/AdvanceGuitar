@@ -105,3 +105,24 @@ export function playMetronome(bpm: 60 | 72 | 84, beats = 8): void {
     playTone({ midi: index % 4 === 0 ? 84 : 79, timbre: "pure", delay: index * interval, duration: 0.06, volume: 0.1 });
   }
 }
+
+export function playFeedbackSound(type: "correct" | "incorrect" | "complete", volume = 0.2): void {
+  try {
+    const context = getAudioContext();
+    if (context.state === "suspended") void context.resume();
+    if (type === "correct") {
+      playTone({ midi: 76, timbre: "piano", duration: 0.18, delay: 0, volume: volume * 0.9 });
+      playTone({ midi: 79, timbre: "piano", duration: 0.35, delay: 0.09, volume });
+    } else if (type === "incorrect") {
+      playTone({ midi: 58, timbre: "guitar", duration: 0.22, delay: 0, volume: volume * 0.8 });
+      playTone({ midi: 55, timbre: "guitar", duration: 0.3, delay: 0.08, volume: volume * 0.7 });
+    } else if (type === "complete") {
+      playTone({ midi: 60, timbre: "piano", duration: 0.25, delay: 0, volume });
+      playTone({ midi: 64, timbre: "piano", duration: 0.25, delay: 0.12, volume });
+      playTone({ midi: 67, timbre: "piano", duration: 0.25, delay: 0.24, volume });
+      playTone({ midi: 72, timbre: "piano", duration: 0.6, delay: 0.36, volume: volume * 1.1 });
+    }
+  } catch {
+    // AudioContext might be unavailable or suspended
+  }
+}

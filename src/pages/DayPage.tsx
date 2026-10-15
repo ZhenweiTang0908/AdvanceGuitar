@@ -1,9 +1,10 @@
-import { ArrowLeft, Clock3, Music2 } from "lucide-react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Clock3, Music2 } from "lucide-react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { DailyReflection } from "../components/DailyReflection";
 import { ExerciseCard } from "../components/ExerciseCard";
 import { MarkdownView } from "../components/MarkdownView";
 import { PageHeader } from "../components/PageHeader";
+import { MascotPicko } from "../components/MascotPicko";
 import { getCurriculumDay } from "../content/loadCurriculum";
 import { getExercise } from "../data/exercises";
 import { weakestDomain } from "../progress/logic";
@@ -15,6 +16,12 @@ export function DayPage() {
   const dayNumber = Number(params.day);
   const day = getCurriculumDay(dayNumber);
   const { snapshot, saveDailyLog } = useProgress();
+  const navigate = useNavigate();
+
+  function handleDailyLogSave(log: Parameters<typeof saveDailyLog>[0]) {
+    saveDailyLog(log);
+    navigate(dayNumber < 28 ? `/day/${dayNumber + 1}` : "/progress");
+  }
 
   if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 28) return <Navigate to="/stage/1" replace />;
   if (!day) {
@@ -28,9 +35,21 @@ export function DayPage() {
   const exercises = day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise));
   const remedial = exercises.length > 0 ? `remedial-${weakestDomain(snapshot.results)}` : undefined;
   const completed = completedExerciseIds(snapshot);
+  const isTodayAllDone = exercises.length > 0 && exercises.every((e) => completed.has(e.id));
 
   return (
     <div className="page">
+      <div className="picko-companion-card">
+        <MascotPicko mood={isTodayAllDone ? "celebrate" : "listen"} size={64} />
+        <div className="picko-bubble">
+          <p>
+            {isTodayAllDone
+              ? "太棒了，今天的练习全部通关！别忘了在下方写写复盘，把难点记下来。"
+              : "今天重点攻克声音与指板位置，跟着耳朵慢慢找，弹错也没关系！"}
+          </p>
+        </div>
+      </div>
+
       <PageHeader
         eyebrow={`Week ${day.week} · Day ${day.day}`}
         title={day.title}
@@ -42,6 +61,13 @@ export function DayPage() {
         <span><Music2 aria-hidden="true" size={16} />{day.newNotes.length > 0 ? `今日音：${day.newNotes.join("、")}` : "复习与验收"}</span>
         {day.songTask ? <span>包含自选歌曲片段</span> : null}
       </div>
+
+      <nav className="day-navigation" aria-label="切换课程日">
+        {day.day > 1 ? <Link className="button button--secondary" to={`/day/${day.day - 1}`}><ArrowLeft size={16} />上一天</Link> : <span />}
+        {day.day < 28
+          ? <Link className="button button--secondary" to={`/day/${day.day + 1}`}>下一天<ArrowRight size={16} /></Link>
+          : <Link className="button button--primary" to="/progress">阶段进度<ArrowRight size={16} /></Link>}
+      </nav>
 
       <section className="content-section">
         <div className="section-heading">
@@ -55,13 +81,13 @@ export function DayPage() {
       </section>
 
       <details className="study-notes">
-        <summary>今日讲义 <span>按需展开</span></summary>
+        <summary>要点速览 <span>展开说明</span></summary>
         <div className="study-notes__body"><MarkdownView markdown={day.body} /></div>
       </details>
 
       <details className="study-notes reflection-notes" open={Boolean(snapshot.dailyLogs[day.day]?.completedAt)}>
-        <summary>完成后复盘 <span>三个问题</span></summary>
-        <div className="study-notes__body"><DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={saveDailyLog} /></div>
+        <summary>训练备注 <span>选填</span></summary>
+        <div className="study-notes__body"><DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={handleDailyLogSave} /></div>
       </details>
     </div>
   );

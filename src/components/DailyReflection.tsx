@@ -22,22 +22,22 @@ export function DailyReflection({ day, initialLog, onSave }: DailyReflectionProp
   return (
     <form className="reflection panel" onSubmit={handleSubmit}>
       <div className="panel__heading">
-        <div><strong>今日复盘</strong><span>用具体卡点决定明天的补弱题。</span></div>
+        <div><strong>训练备注</strong><span>记录今天的练习卡点（选填）。</span></div>
         {saved ? <span className="saved-state">已保存</span> : null}
       </div>
       <label className="field">
-        <span>今天练了什么</span>
-        <textarea value={practiced} onChange={(event) => setPracticed(event.target.value)} placeholder="例如：二弦五音定位，四条四音短句，A/Am 横按推导" required />
+        <span>练习内容</span>
+        <textarea value={practiced} onChange={(event) => setPracticed(event.target.value)} placeholder="例如：二弦五音定位" rows={2} />
       </label>
       <label className="field">
-        <span>实际用时（分钟）</span>
-        <input type="number" min="1" max="180" value={minutes} onChange={(event) => setMinutes(Number(event.target.value))} required />
+        <span>用时（分钟）</span>
+        <input type="number" min="1" max="180" value={minutes} onChange={(event) => setMinutes(Number(event.target.value))} />
       </label>
       <label className="field">
-        <span>主要卡在哪里</span>
-        <textarea value={blocker} onChange={(event) => setBlocker(event.target.value)} placeholder="例如：能哼出来，但找不到 E 在第二弦的位置" required />
+        <span>主要难点</span>
+        <textarea value={blocker} onChange={(event) => setBlocker(event.target.value)} placeholder="例如：找不到 E 在二弦的位置" rows={2} />
       </label>
-      <button className="button button--primary" type="submit">保存复盘</button>
+      <button className="button button--primary" type="submit">保存备注</button>
     </form>
   );
 }
