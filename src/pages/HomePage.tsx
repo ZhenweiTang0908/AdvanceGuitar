@@ -11,10 +11,10 @@ import { useProgress } from "../progress/ProgressProvider";
 import { useI18n } from "../i18n";
 
 export function HomePage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { snapshot } = useProgress();
   const nextDay = nextRecommendedDay(snapshot.dailyLogs);
-  const day = getCurriculumDay(nextDay);
+  const day = getCurriculumDay(nextDay, language);
   const exercises = day
     ? day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise))
     : getExercisesForDay(nextDay);

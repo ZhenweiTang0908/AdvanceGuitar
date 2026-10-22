@@ -1,17 +1,26 @@
 import type { CurriculumDay } from "../types/curriculum";
 import type { NoteName } from "../types/music";
+import type { Language } from "../i18n";
 
 const rawDays = import.meta.glob("/content/stage-1/day-*.md", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
+const localizedDays = {
+  en: import.meta.glob("/content/locales/en/stage-1/day-*.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>,
+  de: import.meta.glob("/content/locales/de/stage-1/day-*.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>,
+};
 
 const rawOverview = import.meta.glob("/content/stage-1-overview.md", {
   query: "?raw",
   import: "default",
   eager: true,
 }) as Record<string, string>;
+const localizedOverview = {
+  en: import.meta.glob("/content/locales/en/stage-1-overview.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>,
+  de: import.meta.glob("/content/locales/de/stage-1-overview.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>,
+};
 
 interface Frontmatter {
   day: number;
@@ -72,15 +81,30 @@ export function parseMarkdown(markdown: string): { frontmatter: Frontmatter; bod
   };
 }
 
-export const curriculumDays: readonly CurriculumDay[] = Object.entries(rawDays)
+function parseDays(source: Record<string, string>): readonly CurriculumDay[] {
+  return Object.entries(source)
   .map(([path, markdown]) => {
     const parsed = parseMarkdown(markdown);
     return { ...parsed.frontmatter, body: parsed.body, path };
   })
   .sort((first, second) => first.day - second.day);
+}
 
-export function getCurriculumDay(day: number): CurriculumDay | undefined {
-  return curriculumDays.find((candidate) => candidate.day === day);
+export const curriculumDays: readonly CurriculumDay[] = parseDays(localizedDays.en).length
+  ? parseDays(localizedDays.en)
+  : parseDays(rawDays);
+
+export function getCurriculumDays(language: Language): readonly CurriculumDay[] {
+  const translated = parseDays(localizedDays[language]);
+  return translated.length ? translated : parseDays(rawDays);
+}
+
+export function getCurriculumDay(day: number, language: Language = "en"): CurriculumDay | undefined {
+  return getCurriculumDays(language).find((candidate) => candidate.day === day);
 }
 
 export const stageOverviewMarkdown = Object.values(rawOverview)[0] ?? "";
+
+export function getStageOverview(language: Language): string {
+  return Object.values(localizedOverview[language])[0] ?? stageOverviewMarkdown;
+}

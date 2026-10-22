@@ -2,22 +2,24 @@ import { LockKeyhole } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { MarkdownView } from "../components/MarkdownView";
-import { curriculumDays, stageOverviewMarkdown } from "../content/loadCurriculum";
+import { getCurriculumDays, getStageOverview } from "../content/loadCurriculum";
 import { completedDayCount, dayCompletion } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
 import { useI18n } from "../i18n";
 
 const WEEKS = [
-  { week: 1, title: "建立 C、E、G 与局部指板的连接", days: "1–7" },
-  { week: 2, title: "加入 D、A，形成五音范围", days: "8–14" },
-  { week: 3, title: "从单音进入 4–6 音短句", days: "15–21" },
-  { week: 4, title: "减少尝试次数并完成验收", days: "22–28" },
+  { week: 1, days: "1–7" },
+  { week: 2, days: "8–14" },
+  { week: 3, days: "15–21" },
+  { week: 4, days: "22–28" },
 ] as const;
 
 export function StagePage() {
   const { t, language } = useI18n();
   const { snapshot } = useProgress();
   const completed = completedDayCount(snapshot);
+  const daysInLanguage = getCurriculumDays(language);
+  const stageOverview = getStageOverview(language);
 
   return (
     <div className="page">
@@ -26,13 +28,13 @@ export function StagePage() {
         title={t("stageTitle")}
         description={t("stageDescription", { count: completed })}
       />
-      {stageOverviewMarkdown ? (
+      {stageOverview ? (
         <details className="study-notes stage-overview">
           <summary>{t("stageNotes")} <span>{t("stageNotesSubtitle")}</span></summary>
-          <div className="study-notes__body"><MarkdownView markdown={stageOverviewMarkdown} /></div>
+          <div className="study-notes__body"><MarkdownView markdown={stageOverview} /></div>
         </details>
       ) : null}
-      {curriculumDays.length === 0 ? (
+      {daysInLanguage.length === 0 ? (
         <section className="panel empty-state">
           <LockKeyhole aria-hidden="true" size={24} />
           <h2>{language === "de" ? "Kursinhalte werden vorbereitet" : "Curriculum is being prepared"}</h2>
@@ -41,7 +43,7 @@ export function StagePage() {
       ) : null}
       <div className="week-list">
         {WEEKS.map((week) => {
-          const days = curriculumDays.filter((day) => day.week === week.week);
+          const days = daysInLanguage.filter((day) => day.week === week.week);
           return (
             <section className="week-card" key={week.week}>
               <header>

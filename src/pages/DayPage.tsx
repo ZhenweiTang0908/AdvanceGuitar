@@ -13,10 +13,10 @@ import { useProgress } from "../progress/ProgressProvider";
 import { useI18n } from "../i18n";
 
 export function DayPage() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const params = useParams();
   const dayNumber = Number(params.day);
-  const day = getCurriculumDay(dayNumber);
+  const day = getCurriculumDay(dayNumber, language);
   const { snapshot, saveDailyLog } = useProgress();
   const navigate = useNavigate();
 
@@ -53,7 +53,7 @@ export function DayPage() {
       </div>
 
       <PageHeader
-        eyebrow={`Week ${day.week} · Day ${day.day}`}
+        eyebrow={t("weekDay", { week: day.week, day: day.day })}
         title={day.title}
         description={day.goal}
         actions={<Link className="button button--secondary" to="/stage/1"><ArrowLeft size={16} />{t("allLessons")}</Link>}

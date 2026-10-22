@@ -11,6 +11,7 @@ interface MascotPickoProps {
 }
 
 export function MascotPicko({ mood = "cheer", size = 80, speech, className = "" }: MascotPickoProps) {
+  const { t } = useI18n();
   return (
     <div className={`picko-wrapper ${className}`} style={{ display: "inline-flex", alignItems: "center", gap: "1rem" }}>
       <div className="picko-avatar" style={{ width: size, height: size, flexShrink: 0, position: "relative" }}>
@@ -21,7 +22,7 @@ export function MascotPicko({ mood = "cheer", size = 80, speech, className = "" 
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           style={{ filter: "drop-shadow(0 4px 0 rgba(0,0,0,0.06))", overflow: "visible" }}
-          aria-label="吉他拨片伙伴 Picko"
+          aria-label={t("mascotLabel")}
           role="img"
         >
           {/* Headband / Headphone arch */}

@@ -1,4 +1,5 @@
 import { ArrowRight, Headphones } from "lucide-react";
+import { useI18n } from "../i18n";
 
 interface PlaceholderPageProps {
   title: string;
@@ -6,14 +7,15 @@ interface PlaceholderPageProps {
 }
 
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
+  const { t } = useI18n();
   return (
     <div className="page page--centered">
       <section className="placeholder-panel">
         <span className="icon-tile"><Headphones aria-hidden="true" size={22} /></span>
-        <p className="eyebrow">第一阶段 · C 大调</p>
+        <p className="eyebrow">{t("stageOneCMajor")}</p>
         <h1>{title}</h1>
         <p>{description}</p>
-        <button className="button button--primary" type="button">准备好了 <ArrowRight aria-hidden="true" size={17} /></button>
+        <button className="button button--primary" type="button">{t("ready")} <ArrowRight aria-hidden="true" size={17} /></button>
       </section>
     </div>
   );

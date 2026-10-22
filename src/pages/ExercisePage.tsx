@@ -42,6 +42,11 @@ export function ExercisePage() {
   if (!exercise) {
     return <Navigate to="/library" replace />;
   }
+  const exerciseTitle = exercise.remedial
+    ? t(exercise.skill === "ear" ? "notesSingle" : exercise.skill === "phrase" ? "notesPhrase" : exercise.skill === "fretboard" ? "notesFretboard" : "notesChord")
+    : exercise.skill === "ear" ? t("skillEar")
+    : exercise.skill === "phrase" ? (exercise.day >= 20 ? t("sixNotePhrases") : t("skillPhrase"))
+    : exercise.skill === "fretboard" ? t("skillFretboard") : t("skillChord");
 
   function handleRound(outcome: RoundOutcome) {
     if (outcome.correct) {
@@ -86,8 +91,8 @@ export function ExercisePage() {
   return (
     <div className="page exercise-page">
       <PageHeader
-        eyebrow={exercise.remedial ? "Adaptive practice" : `Week ${Math.ceil(exercise.day / 7)} · Day ${exercise.day}`}
-        title={exercise.title}
+        eyebrow={exercise.remedial ? t("adaptivePractice") : t("weekDay", { week: Math.ceil(exercise.day / 7), day: exercise.day })}
+        title={exerciseTitle}
         actions={<Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}><ArrowLeft size={16} />{t("goBack")}</Link>}
       />
       {finished ? (
@@ -407,8 +412,8 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
       {snapshot.settings.answerMode === "microphone" ? (
         <div className="mic-strip">
           <Mic aria-hidden="true" size={17} />
-          <span>{microphone.state === "listening" ? `正在等待第 ${answer.length + 1} 个音 · 按空格停止` : "按空格开启麦克风，开启后会跨题持续"}</span>
-          {microphone.state === "listening" ? <button className="text-action" type="button" onClick={microphone.stop}>停止</button> : <button className="text-action" type="button" onClick={() => void microphone.start()} disabled={microphone.state === "requesting"}>开启识别</button>}
+          <span>{microphone.state === "listening" ? (language === "de" ? `Warte auf Ton ${answer.length + 1} · Leertaste zum Stoppen` : `Waiting for note ${answer.length + 1} · press Space to stop`) : t("startMicSpace")}</span>
+          {microphone.state === "listening" ? <button className="text-action" type="button" onClick={microphone.stop}>{t("stop")}</button> : <button className="text-action" type="button" onClick={() => void microphone.start()} disabled={microphone.state === "requesting"}>{t("enableMic")}</button>}
         </div>
       ) : null}
     </section>

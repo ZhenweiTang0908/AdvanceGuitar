@@ -1,6 +1,6 @@
 # AdvanceGuitar
 
-An interactive guitar ear-training and fretboard practice app. The 28-day first stage connects what you hear with fretboard positions, melodic phrases, and movable E/Em chord shapes. Each daily session takes about 60 minutes. The interface is available in English (default) and German; lesson text is currently in Chinese.
+An interactive guitar ear-training and fretboard practice app. The 28-day first stage connects what you hear with fretboard positions, melodic phrases, and movable E/Em chord shapes. Each daily session takes about 60 minutes. The app is available in English (default) and German, including all 28 Stage 1 lessons.
 
 ## Getting started
 

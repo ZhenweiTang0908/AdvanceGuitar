@@ -36,7 +36,7 @@ export function AppShell() {
       <main className="main-content" id="main-content">
         <Outlet />
       </main>
-      <nav className="bottom-nav" aria-label="移动端主导航">
+      <nav className="bottom-nav" aria-label={t("mobileNavigation")}>
         {primaryNavigation.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}>
             <Icon aria-hidden="true" size={20} />

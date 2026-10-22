@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { detectPitch, type DetectedPitch } from "../audio/pitchDetection";
+import { useI18n } from "../i18n";
 
 export type MicrophoneState = "idle" | "requesting" | "listening" | "unsupported" | "denied" | "error";
 
@@ -15,6 +16,7 @@ export interface PitchCaptureResult {
 }
 
 export function usePitchCapture(): PitchCaptureResult {
+  const { t } = useI18n();
   const [state, setState] = useState<MicrophoneState>("idle");
   const [pitch, setPitch] = useState<DetectedPitch | null>(null);
   const [stablePitch, setStablePitch] = useState<DetectedPitch | null>(null);
@@ -43,7 +45,7 @@ export function usePitchCapture(): PitchCaptureResult {
   const start = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) {
       setState("unsupported");
-      setError("麦克风识别需要 localhost 或 HTTPS，以及支持 Web Audio 的浏览器。");
+      setError(t("micRequirements"));
       return;
     }
     const requestId = requestIdRef.current + 1;
@@ -89,11 +91,12 @@ export function usePitchCapture(): PitchCaptureResult {
       loop();
     } catch (caught) {
       if (requestId !== requestIdRef.current) return;
-      const message = caught instanceof Error ? caught.message : "无法打开麦克风";
-      setState(message.toLowerCase().includes("denied") || message.toLowerCase().includes("permission") ? "denied" : "error");
-      setError(message);
+      const reason = caught instanceof Error ? caught.message : "Unknown error";
+      const denied = reason.toLowerCase().includes("denied") || reason.toLowerCase().includes("permission");
+      setState(denied ? "denied" : "error");
+      setError(denied ? t("micDenied") : t("micOpenFailed", { reason }));
     }
-  }, []);
+  }, [t]);
 
   const consumeStablePitch = useCallback(() => {
     stableFramesRef.current = 0;

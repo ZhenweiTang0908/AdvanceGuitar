@@ -20,7 +20,7 @@ export function LibraryPage() {
 
   return (
     <div className="page">
-      <PageHeader eyebrow="Practice library" title={t("libraryTitle")} description={t("libraryDescription")} />
+      <PageHeader eyebrow={t("library")} title={t("libraryTitle")} description={t("libraryDescription")} />
       <section className="content-section panel">
         <div className="panel__heading"><div><strong>{t("audioTools")}</strong><span>{t("audioToolsHint")}</span></div><Music2 aria-hidden="true" size={19} /></div>
         <div className="button-row">

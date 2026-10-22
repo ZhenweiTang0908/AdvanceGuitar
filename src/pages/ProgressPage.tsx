@@ -8,7 +8,7 @@ import { evaluateAcceptance } from "../progress/acceptance";
 import { completedDayCount } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
 import type { SkillDomain } from "../types/music";
-import { useI18n } from "../i18n";
+import { useI18n, type MessageKey } from "../i18n";
 
 export function ProgressPage() {
   const { t } = useI18n();
@@ -26,7 +26,18 @@ export function ProgressPage() {
     try {
       const parsed = JSON.parse(await file.text()) as unknown;
       const result = importProgress(parsed);
-      setMessage(result.ok ? t("importSuccessMessage") : t("importFailure", { reason: result.error ?? "Invalid file format" }));
+      const errorKeys: Record<string, MessageKey> = {
+        "进度文件不是有效对象": "importInvalidObject",
+        "进度文件版本不受支持": "importUnsupportedVersion",
+        "课程版本不匹配": "importCurriculumMismatch",
+        "缺少答题记录": "importMissingResults",
+        "缺少每日复盘": "importMissingLogs",
+        "设置格式不正确": "importInvalidSettings",
+        "音量设置超出范围": "importVolumeRange",
+        "音色设置不正确": "importInvalidTone",
+      };
+      const reason = result.error ? (errorKeys[result.error] ? t(errorKeys[result.error]) : result.error) : t("importInvalidSettings");
+      setMessage(result.ok ? t("importSuccessMessage") : t("importFailure", { reason }));
     } catch {
       setMessage(t("importInvalidJson"));
     }
