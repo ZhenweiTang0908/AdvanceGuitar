@@ -12,6 +12,7 @@ import { useMicrophoneSpaceToggle } from "../hooks/useMicrophoneSpaceToggle";
 import { midiForRootName, noteByName, PITCH_NOTES, type NoteName } from "../types/music";
 import type { ExerciseDefinition } from "../types/curriculum";
 import { useProgress } from "../progress/ProgressProvider";
+import { useI18n } from "../i18n";
 
 interface RoundOutcome {
   correct: boolean;
@@ -19,6 +20,7 @@ interface RoundOutcome {
 }
 
 export function ExercisePage() {
+  const { t } = useI18n();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const exercise = id ? getExercise(id) : undefined;
@@ -86,7 +88,7 @@ export function ExercisePage() {
       <PageHeader
         eyebrow={exercise.remedial ? "Adaptive practice" : `Week ${Math.ceil(exercise.day / 7)} · Day ${exercise.day}`}
         title={exercise.title}
-        actions={<Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}><ArrowLeft size={16} />返回</Link>}
+        actions={<Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}><ArrowLeft size={16} />{t("goBack")}</Link>}
       />
       {finished ? (
         <CompletionPanel exercise={exercise} scores={roundScores} onRestart={restart} />
@@ -96,9 +98,9 @@ export function ExercisePage() {
             <span style={{ width: `${((roundIndex + 1) / exercise.rounds) * 100}%` }} />
           </div>
           <div className="round-info-bar">
-            <p className="round-label">第 {roundIndex + 1} / {exercise.rounds} 题</p>
+            <p className="round-label">{t("round", { current: roundIndex + 1, total: exercise.rounds })}</p>
             {currentStreak >= 2 ? (
-              <span className="combo-badge">🔥 {currentStreak} 连对</span>
+              <span className="combo-badge">{t("streakCorrect", { count: currentStreak })}</span>
             ) : null}
           </div>
           <ExerciseRound key={`${exercise.id}-${roundIndex}`} exercise={exercise} roundIndex={roundIndex} onRound={handleRound} microphone={microphone} />
@@ -109,18 +111,19 @@ export function ExercisePage() {
 }
 
 function CompletionPanel({ exercise, scores, onRestart }: { exercise: ExerciseDefinition; scores: readonly boolean[]; onRestart: () => void }) {
+  const { t } = useI18n();
   const correct = scores.filter(Boolean).length;
   return (
     <section className="panel completion-panel">
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
         <MascotPicko mood="celebrate" size={88} />
       </div>
-      <p className="eyebrow">GREAT JOB!</p>
-      <h2>{correct === scores.length ? "太棒了，全部命中！" : `练习通关：完成 ${scores.length} 题`}</h2>
-      <p>{correct} 题一遍听准，{scores.length - correct} 题经过提示完成。耳朵的敏锐度就是这样练出来的！</p>
+      <p className="eyebrow">{t("greatJob")}</p>
+      <h2>{correct === scores.length ? t("perfectRun") : t("performPractice", { count: scores.length })}</h2>
+      <p>{t("roundSummary", { correct, helped: scores.length - correct })}</p>
       <div className="button-row button-row--center">
-        <button className="button button--primary" type="button" onClick={onRestart}><RotateCcw size={16} />再练一组</button>
-        <Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}>回到{exercise.day > 0 ? "今日课程" : "练习库"} <ArrowRight size={16} /></Link>
+        <button className="button button--primary" type="button" onClick={onRestart}><RotateCcw size={16} />{t("practiceAnother")}</button>
+        <Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}>{t("backTo", { page: exercise.day > 0 ? t("today") : t("library") })} <ArrowRight size={16} /></Link>
       </div>
     </section>
   );
@@ -134,6 +137,7 @@ function ExerciseRound({ exercise, roundIndex, onRound, microphone }: { exercise
 }
 
 function NoteRound({ exercise, roundIndex, onRound, microphone }: { exercise: ExerciseDefinition; roundIndex: number; onRound: (outcome: RoundOutcome) => void; microphone: PitchCaptureResult }) {
+  const { t, language } = useI18n();
   const questions = useMemo(() => buildNoteQuestions(exercise), [exercise]);
   const question = questions[roundIndex];
   const { snapshot } = useProgress();
@@ -178,7 +182,9 @@ function NoteRound({ exercise, roundIndex, onRound, microphone }: { exercise: Ex
     setAttempts(nextAttempts);
     const guessed = noteByName(note).midi;
     const target = noteByName(question.target).midi;
-    setFeedback(`${note} 比目标${guessed > target ? "高" : "低"}。下一次往${guessed > target ? "低音" : "高音"}方向找。`);
+    setFeedback(language === "de"
+      ? `${note} ist ${guessed > target ? t("noteHigh") : t("noteLow")} als der Zielton. ${guessed > target ? t("moveHigher") : t("moveLower")}`
+      : `${note} is ${guessed > target ? t("noteHigh") : t("noteLow")} than the target. ${guessed > target ? t("moveHigher") : t("moveLower")}`);
   }
 
   // Keyboard shortcut listener: R to replay, C for tonic, numbers 1-9 for choices
@@ -216,37 +222,37 @@ function NoteRound({ exercise, roundIndex, onRound, microphone }: { exercise: Ex
   return (
     <section className="practice-panel panel">
       <div className="practice-panel__header">
-        <div><p className="eyebrow">Listen · hum · find</p><h2>先听目标音，再在琴上找</h2></div>
+        <div><p className="eyebrow">{t("listenHumFind")}</p><h2>{t("listenTarget")}</h2></div>
         <div className="button-row">
           <button className="button button--quiet" type="button" onClick={() => void playTonicReference()}>
-            单独听 C <span className="keycap-badge">C</span>
+            {t("onlyC")} <span className="keycap-badge">C</span>
           </button>
           <button className="button button--primary" type="button" onClick={() => void playReference()}>
-            <Headphones size={17} />播放目标音 <span className="keycap-badge keycap-badge--inverse">R</span>
+            <Headphones size={17} />{t("playTargetNote")} <span className="keycap-badge keycap-badge--inverse">R</span>
           </button>
         </div>
       </div>
-      <p className="practice-instruction">不播放伴奏。听完目标音先哼出来，在琴上试音，再提交你找到的音。可用数字键 <kbd>1</kbd> ~ <kbd>{question.choices.length}</kbd> 快速作答。</p>
+      <p className="practice-instruction">{t("notePracticeHelp", { count: question.choices.length })}</p>
       <div className="answer-grid">
         {question.choices.map((note, index) => (
           <button className="note-button" type="button" key={note} onClick={() => answer(note)}>
             <span className="note-button__keycap">{index + 1}</span>
             {note}
-            <small>{noteByName(note).degree} 级</small>
+            <small>{noteByName(note).degree} {t("degree")}</small>
           </button>
         ))}
       </div>
-      {feedback ? <p className="inline-feedback" role="status">{feedback} 已尝试 {attempts} 次。</p> : null}
-      {revealed ? <p className="inline-feedback inline-feedback--answer">答案是 {question.target}（{noteByName(question.target).degree} 级）。</p> : null}
+      {feedback ? <p className="inline-feedback" role="status">{feedback} {t("triedCount", { count: attempts })}.</p> : null}
+      {revealed ? <p className="inline-feedback inline-feedback--answer">{t("answerIs", { note: question.target, degree: noteByName(question.target).degree })}</p> : null}
       <div className="practice-footer">
-        <span>已尝试 {attempts} 次</span>
-        <button className="button button--quiet" type="button" onClick={() => { setRevealed(true); onRound({ correct: false, attempts: Math.max(attempts, 1) }); }}>揭晓并进入下一题</button>
+        <span>{t("triedCount", { count: attempts })}</span>
+        <button className="button button--quiet" type="button" onClick={() => { setRevealed(true); onRound({ correct: false, attempts: Math.max(attempts, 1) }); }}>{t("revealAndContinue")}</button>
       </div>
       {snapshot.settings.answerMode === "microphone" ? (
         <div className="mic-strip">
           <Mic aria-hidden="true" size={17} />
-          <span>{microphone.state === "listening" ? (microphone.stablePitch ? `识别到 ${microphone.pitch?.frequency.toFixed(1)} Hz` : "弹一个稳定单音 · 按空格停止") : "按空格开启麦克风，开启后会跨题持续"}</span>
-          {microphone.state === "listening" ? <button className="text-action" type="button" onClick={microphone.stop}>停止</button> : <button className="text-action" type="button" onClick={() => void microphone.start()} disabled={microphone.state === "requesting"}><Volume2 size={14} />开启识别</button>}
+          <span>{microphone.state === "listening" ? (microphone.stablePitch ? t("identify", { frequency: microphone.pitch?.frequency.toFixed(1) ?? "" }) : t("stopMic")) : t("startMicSpace")}</span>
+          {microphone.state === "listening" ? <button className="text-action" type="button" onClick={microphone.stop}>{t("stop")}</button> : <button className="text-action" type="button" onClick={() => void microphone.start()} disabled={microphone.state === "requesting"}><Volume2 size={14} />{t("enableMic")}</button>}
         </div>
       ) : null}
     </section>
@@ -254,6 +260,7 @@ function NoteRound({ exercise, roundIndex, onRound, microphone }: { exercise: Ex
 }
 
 function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: ExerciseDefinition; roundIndex: number; onRound: (outcome: RoundOutcome) => void; microphone: PitchCaptureResult }) {
+  const { t, language } = useI18n();
   const questions = useMemo(() => buildPhraseQuestions(exercise), [exercise]);
   const question = questions[roundIndex];
   const { snapshot } = useProgress();
@@ -301,7 +308,9 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
     const expected = noteByName(question.target[firstMismatch]);
     const actual = noteByName(answer[firstMismatch]);
     setAttempts(attempts + 1);
-    setFeedback(`第 ${firstMismatch + 1} 个音${actual.midi > expected.midi ? "偏高" : "偏低"}。保留其他音，再调整这里。`);
+    setFeedback(language === "de"
+      ? `Ton ${firstMismatch + 1} ist ${actual.midi > expected.midi ? "zu hoch" : "zu tief"}. Behalte die anderen Töne bei und ändere diesen.`
+      : `Note ${firstMismatch + 1} is ${actual.midi > expected.midi ? "too high" : "too low"}. Keep the other notes and adjust this one.`);
   }
 
   // Keyboard shortcut listener: R to replay, C for tonic, Backspace to delete last, Enter to submit
@@ -347,17 +356,17 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
   return (
     <section className="practice-panel panel">
       <div className="practice-panel__header">
-        <div><p className="eyebrow">Phrase · {question.target.length} notes</p><h2>记住轮廓，再逐个放回去</h2></div>
+        <div><p className="eyebrow">{t("phraseLabel")} · {question.target.length} notes</p><h2>{t("phrasePractice")}</h2></div>
         <div className="button-row">
           <button className="button button--quiet" type="button" onClick={() => void playTonicReference()}>
-            单独听 C <span className="keycap-badge">C</span>
+            {t("onlyC")} <span className="keycap-badge">C</span>
           </button>
           <button className="button button--primary" type="button" onClick={() => void playReference()}>
-            <Headphones size={17} />播放短句 <span className="keycap-badge keycap-badge--inverse">R</span>
+            <Headphones size={17} />{language === "de" ? "Melodie abspielen" : "Play phrase"} <span className="keycap-badge keycap-badge--inverse">R</span>
           </button>
         </div>
       </div>
-      <p className="practice-instruction">听完先哼唱。可用数字键选音，<kbd>Backspace</kbd> 回退，填满后按 <kbd>Enter</kbd> 提交短句。</p>
+      <p className="practice-instruction">{t("phraseHelp")}</p>
       <div className="phrase-slots">
         {question.target.map((_, index) => (
           <span
@@ -368,7 +377,7 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
                 setAnswer((current) => current.slice(0, index));
               }
             }}
-            title={index < answer.length ? "点击回退到此处" : undefined}
+            title={index < answer.length ? t("undoHere") : undefined}
             style={{ cursor: index < answer.length ? "pointer" : "default" }}
           >
             {answer[index] ?? "?"}
@@ -390,9 +399,9 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
       </div>
       {feedback ? <p className="inline-feedback" role="status">{feedback}</p> : null}
       <div className="practice-footer">
-        <button className="button button--quiet" type="button" onClick={() => { setAnswer([]); setFeedback(null); }}><RotateCcw size={15} />清空排列</button>
+        <button className="button button--quiet" type="button" onClick={() => { setAnswer([]); setFeedback(null); }}><RotateCcw size={15} />{t("clearArrangement")}</button>
         <button className="button button--primary" type="button" onClick={submit} disabled={answer.length !== question.target.length}>
-          提交短句 <span className="keycap-badge keycap-badge--inverse">Enter</span>
+          {t("submitPhrase")} <span className="keycap-badge keycap-badge--inverse">Enter</span>
         </button>
       </div>
       {snapshot.settings.answerMode === "microphone" ? (
@@ -407,7 +416,8 @@ function PhraseRound({ exercise, roundIndex, onRound, microphone }: { exercise: 
 }
 
 function ChoiceRound({ exercise, roundIndex, onRound, direction }: { exercise: ExerciseDefinition; roundIndex: number; onRound: (outcome: RoundOutcome) => void; direction: "fretboard" | "chord" }) {
-  const questions = useMemo(() => direction === "fretboard" ? buildFretboardQuestions(exercise) : buildChordQuestions(exercise), [direction, exercise]);
+  const { t, language } = useI18n();
+  const questions = useMemo(() => direction === "fretboard" ? buildFretboardQuestions(exercise, language) : buildChordQuestions(exercise, language), [direction, exercise, language]);
   const question = questions[roundIndex];
   const [attempts, setAttempts] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -420,7 +430,7 @@ function ChoiceRound({ exercise, roundIndex, onRound, direction }: { exercise: E
       return;
     }
     setAttempts(attempts + 1);
-    setFeedback(`“${choice}”还不对。回到根音位置，重新数一下音程关系。`);
+    setFeedback(t("wrongNote", { choice }));
   }
 
   async function playChordReference() {
@@ -465,10 +475,10 @@ function ChoiceRound({ exercise, roundIndex, onRound, direction }: { exercise: E
   return (
     <section className="practice-panel panel">
       <div className="practice-panel__header">
-        <div><p className="eyebrow">{direction === "fretboard" ? "Fretboard" : "Chord shape"}</p><h2>{question.prompt}</h2></div>
+        <div><p className="eyebrow">{direction === "fretboard" ? t("skillFretboard") : t("skillChord")}</p><h2>{question.prompt}</h2></div>
         {direction === "chord" ? (
           <button className="button button--secondary" type="button" onClick={() => void playChordReference()}>
-            <Volume2 size={16} />播放参考和弦 <span className="keycap-badge">R</span>
+            <Volume2 size={16} />{t("chordReference")} <span className="keycap-badge">R</span>
           </button>
         ) : null}
       </div>
@@ -480,9 +490,9 @@ function ChoiceRound({ exercise, roundIndex, onRound, direction }: { exercise: E
           </button>
         ))}
       </div>
-      {feedback ? <p className="inline-feedback" role="status">{feedback} 已尝试 {attempts} 次。</p> : null}
+      {feedback ? <p className="inline-feedback" role="status">{feedback} {t("triedCount", { count: attempts })}.</p> : null}
       <div className="practice-footer">
-        <span>已尝试 {attempts} 次 · 可按数字键作答</span>
+        <span>{t("keyInstructions", { count: attempts })}</span>
       </div>
     </section>
   );

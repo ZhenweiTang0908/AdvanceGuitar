@@ -8,10 +8,10 @@ import { evaluateAcceptance } from "../progress/acceptance";
 import { completedDayCount } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
 import type { SkillDomain } from "../types/music";
-
-const DOMAIN_LABELS: Record<SkillDomain, string> = { ear: "单音听辨", phrase: "短句复现", fretboard: "指板定位", chord: "和弦推导" };
+import { useI18n } from "../i18n";
 
 export function ProgressPage() {
+  const { t } = useI18n();
   const { snapshot, exportProgress, importProgress, resetProgress } = useProgress();
   const [message, setMessage] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -26,32 +26,32 @@ export function ProgressPage() {
     try {
       const parsed = JSON.parse(await file.text()) as unknown;
       const result = importProgress(parsed);
-      setMessage(result.ok ? "进度已恢复。" : `导入失败：${result.error ?? "文件格式不正确"}`);
+      setMessage(result.ok ? t("importSuccessMessage") : t("importFailure", { reason: result.error ?? "Invalid file format" }));
     } catch {
-      setMessage("导入失败：文件不是有效 JSON。");
+      setMessage(t("importInvalidJson"));
     }
   }
 
   return (
     <div className="page">
-      <PageHeader eyebrow="Progress" title="学习进度" description="看正确率和尝试次数怎样变化。补弱只选择得分最差的域，不惩罚练习中断。" />
+      <PageHeader eyebrow="Progress" title={t("progressTitle")} description={t("progressDescription")} />
       <section className="stat-grid">
-        <StatCard icon={Target} label="完成天数" value={`${completedDayCount(snapshot)} / 28`} note="固定练习 + 一组补弱 + 复盘" />
-        <StatCard icon={Gauge} label="正确率" value={total > 0 ? `${Math.round((correct / total) * 100)}%` : "—"} note={`${correct} / ${total} 个已作答回合`} />
-        <StatCard icon={Activity} label="平均尝试" value={total > 0 ? averageAttempts.toFixed(1) : "—"} note={`连续 ${calculateStreak(snapshot.dailyLogs)} 天`} />
+        <StatCard icon={Target} label={t("completedDays")} value={`${completedDayCount(snapshot)} / 28`} note={t("fixedPracticeNote")} />
+        <StatCard icon={Gauge} label={t("accuracy")} value={total > 0 ? `${Math.round((correct / total) * 100)}%` : "—"} note={`${correct} / ${total} ${t("answeredRounds")}`} />
+        <StatCard icon={Activity} label={t("averageAttempts")} value={total > 0 ? averageAttempts.toFixed(1) : "—"} note={t("consecutiveDays", { count: calculateStreak(snapshot.dailyLogs) })} />
       </section>
 
       <section className="content-section">
-        <div className="section-heading"><div><p className="eyebrow">By skill</p><h2>四个训练域</h2></div></div>
+        <div className="section-heading"><div><p className="eyebrow">By skill</p><h2>{t("fourSkills")}</h2></div></div>
         <div className="domain-grid">
-          {(Object.keys(DOMAIN_LABELS) as SkillDomain[]).map((domain) => {
+          {(["ear", "phrase", "fretboard", "chord"] as SkillDomain[]).map((domain) => {
             const current = stats[domain];
             const accuracy = current.count > 0 ? Math.round((1 - current.errors / current.count) * 100) : 0;
             return (
               <article className="domain-card" key={domain}>
-                <div><strong>{DOMAIN_LABELS[domain]}</strong><span>{current.count} 题</span></div>
+                <div><strong>{t(domain === "ear" ? "skillEar" : domain === "phrase" ? "skillPhrase" : domain === "fretboard" ? "skillFretboard" : "skillChord")}</strong><span>{t("questionCount", { count: current.count })}</span></div>
                 <div className="usage-bar"><span style={{ width: `${current.count > 0 ? accuracy : 0}%` }} /></div>
-                <small>{current.count > 0 ? `正确率 ${accuracy}%` : "尚未练习"}</small>
+                <small>{current.count > 0 ? t("accuracyNote", { accuracy }) : t("notPracticed")}</small>
               </article>
             );
           })}
@@ -59,25 +59,29 @@ export function ProgressPage() {
       </section>
 
       <section className="content-section panel">
-        <div className="panel__heading"><div><strong>第一阶段验收</strong><span>{acceptance.status === "passed" ? "已通过" : acceptance.status === "needs_review" ? "需要补练" : "等待最终验收"}</span></div></div>
+        <div className="panel__heading"><div><strong>{t("stageChecks")}</strong><span>{acceptance.status === "passed" ? t("passedStatus") : acceptance.status === "needs_review" ? t("needsPractice") : t("waitingAssessment")}</span></div></div>
         <div className="acceptance-grid">
-          {acceptance.checks.map((check) => <article className={check.passed ? "is-complete" : ""} key={check.domain}><strong>{check.label}</strong><span>{check.detail}</span><small>{check.passed ? "通过" : "继续练"}</small></article>)}
+          {acceptance.checks.map((check) => {
+            const count = check.detail.match(/^(\d+)\s*\//)?.[1] ?? "0";
+            const detailKey = check.domain === "ear" ? "checkEar" : check.domain === "phrase" ? "checkPhrase" : check.domain === "fretboard" ? "checkFretboard" : "checkChord";
+            return <article className={check.passed ? "is-complete" : ""} key={check.domain}><strong>{t(check.domain === "ear" ? "skillEar" : check.domain === "phrase" ? "skillPhrase" : check.domain === "fretboard" ? "skillFretboard" : "skillChord")}</strong><span>{t(detailKey, { count })}</span><small>{check.passed ? t("pass") : t("keepPracticing")}</small></article>;
+          })}
         </div>
         {acceptance.status === "needs_review" ? (
           <div className="button-row">
-            {acceptance.remedialPackage.map((domain) => <Link className="button button--secondary" to={`/exercise/remedial-${domain}`} key={domain}>三天补练包 · {DOMAIN_LABELS[domain]}</Link>)}
+            {acceptance.remedialPackage.map((domain) => <Link className="button button--secondary" to={`/exercise/remedial-${domain}`} key={domain}>{t("threeDayPack", { skill: t(domain === "ear" ? "skillEar" : domain === "phrase" ? "skillPhrase" : domain === "fretboard" ? "skillFretboard" : "skillChord") })}</Link>)}
           </div>
         ) : null}
       </section>
 
       <section className="content-section panel data-panel">
-        <div className="panel__heading"><div><strong>本机数据</strong><span>导出文件包含答题、复盘和设置。</span></div></div>
+        <div className="panel__heading"><div><strong>{t("localDataHeading")}</strong><span>{t("exportHint")}</span></div></div>
         {message ? <p className="inline-feedback" role="status">{message}</p> : null}
         <div className="button-row">
-          <button className="button button--primary" type="button" onClick={exportProgress}><Download aria-hidden="true" size={17} />导出 JSON</button>
-          <button className="button button--secondary" type="button" onClick={() => fileRef.current?.click()}><Upload aria-hidden="true" size={17} />导入进度</button>
+          <button className="button button--primary" type="button" onClick={exportProgress}><Download aria-hidden="true" size={17} />{t("exportJson")}</button>
+          <button className="button button--secondary" type="button" onClick={() => fileRef.current?.click()}><Upload aria-hidden="true" size={17} />{t("importProgress")}</button>
           <input ref={fileRef} className="sr-only" type="file" accept="application/json,.json" onChange={(event) => void handleImport(event.target.files?.[0])} />
-          <button className="button button--quiet" type="button" onClick={() => { if (window.confirm("确定清空全部本机进度吗？这个操作不可撤销。")) resetProgress(); }}>清空本机进度</button>
+          <button className="button button--quiet" type="button" onClick={() => { if (window.confirm(t("confirmClear"))) resetProgress(); }}>{t("clearLocal")}</button>
         </div>
       </section>
     </div>

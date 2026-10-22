@@ -5,6 +5,7 @@ import { MarkdownView } from "../components/MarkdownView";
 import { curriculumDays, stageOverviewMarkdown } from "../content/loadCurriculum";
 import { completedDayCount, dayCompletion } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
+import { useI18n } from "../i18n";
 
 const WEEKS = [
   { week: 1, title: "建立 C、E、G 与局部指板的连接", days: "1–7" },
@@ -14,6 +15,7 @@ const WEEKS = [
 ] as const;
 
 export function StagePage() {
+  const { t, language } = useI18n();
   const { snapshot } = useProgress();
   const completed = completedDayCount(snapshot);
 
@@ -21,20 +23,20 @@ export function StagePage() {
     <div className="page">
       <PageHeader
         eyebrow="Stage 1 · 28 days"
-        title="把声音连接到一小块指板"
-        description={`当前完成 ${completed} 天。课程按顺序推荐但不硬锁，你可以在同一天同时推进听觉、指板、短句和和弦。`}
+        title={t("stageTitle")}
+        description={t("stageDescription", { count: completed })}
       />
       {stageOverviewMarkdown ? (
         <details className="study-notes stage-overview">
-          <summary>阶段说明 <span>四周路线与完成标准</span></summary>
+          <summary>{t("stageNotes")} <span>{t("stageNotesSubtitle")}</span></summary>
           <div className="study-notes__body"><MarkdownView markdown={stageOverviewMarkdown} /></div>
         </details>
       ) : null}
       {curriculumDays.length === 0 ? (
         <section className="panel empty-state">
           <LockKeyhole aria-hidden="true" size={24} />
-          <h2>课程内容正在落盘</h2>
-          <p>页面结构、音频引擎和进度系统已经就绪；Markdown 课程内容会在下一批构建中出现在这里。</p>
+          <h2>{language === "de" ? "Kursinhalte werden vorbereitet" : "Curriculum is being prepared"}</h2>
+          <p>{language === "de" ? "Seitenstruktur, Audio und Fortschritt sind bereit. Die Markdown-Lektionen erscheinen mit einem späteren Build." : "The page layout, audio engine, and progress tracking are ready. Markdown lessons will appear in a future build."}</p>
         </section>
       ) : null}
       <div className="week-list">
@@ -43,17 +45,17 @@ export function StagePage() {
           return (
             <section className="week-card" key={week.week}>
               <header>
-                <div><span>WEEK {week.week}</span><h2>{week.title}</h2></div>
-                <small>Day {week.days}</small>
+                <div><span>{t("week", { week: week.week })}</span><h2>{language === "de" ? ["", "C, E und G mit dem Griffbrett verbinden", "D und A ergänzen den Fünftonraum", "Von Einzeltönen zu 4–6-tönigen Melodien", "Versuche reduzieren und Prüfung bestehen"][week.week] : ["", "Connect C, E, and G to nearby fretboard positions", "Add D and A to form a five-note range", "Move from single notes to 4–6-note phrases", "Reduce attempts and complete the assessment"][week.week]}</h2></div>
+                <small>{language === "de" ? "Tage" : "Days"} {week.days}</small>
               </header>
               <div className="day-grid">
-                {days.length === 0 ? <p className="muted">课程内容即将加入。</p> : days.map((day) => {
+                {days.length === 0 ? <p className="muted">{language === "de" ? "Lektionen folgen in Kürze." : "Lessons coming soon."}</p> : days.map((day) => {
                   const status = dayCompletion(snapshot, day.day);
                   return (
                     <Link className={`day-cell${status.complete ? " is-complete" : ""}`} to={`/day/${day.day}`} key={day.day}>
-                      <span>Day {day.day}</span>
+                      <span>{t("day", { day: day.day })}</span>
                       <strong>{day.title}</strong>
-                      <small>{status.complete ? "已完成" : status.completed > 0 ? `${status.completed}/${status.total} 练习` : "未开始"}</small>
+                      <small>{status.complete ? t("completed") : status.completed > 0 ? `${status.completed}/${status.total} ${t("exercises")}` : t("notStarted")}</small>
                     </Link>
                   );
                 })}
@@ -63,12 +65,12 @@ export function StagePage() {
         })}
       </div>
       <section className="content-section panel roadmap-panel">
-        <div className="panel__heading"><div><strong>后续路线</strong><span>先完成第一阶段，再按能力验收逐步解锁。</span></div></div>
+        <div className="panel__heading"><div><strong>{t("nextSteps")}</strong><span>{t("stageFutureDescription")}</span></div></div>
         <ol className="roadmap-list">
-          <li><span>02</span><div><strong>已知调性，扒完整短句</strong><small>扩展完整大调音阶、第五弦与 A 型移动和弦。</small></div></li>
-          <li><span>03</span><div><strong>从录音判断调性并验证</strong><small>用主音、停靠位置、低音与和弦互相核对。</small></div></li>
-          <li><span>04</span><div><strong>从旋律扩展到和弦与伴奏</strong><small>低音、和弦性质、转位与 8 小节片段。</small></div></li>
-          <li><span>05</span><div><strong>完整扒歌并提高速度</strong><small>串起旋律、和弦、节奏与指板位置。</small></div></li>
+          <li><span>02</span><div><strong>{language === "de" ? "Melodien in einer bekannten Tonart heraushören" : "Transcribe full phrases in a known key"}</strong><small>{language === "de" ? "Erweitere die Durtonleiter, fünfte Saite und verschiebbare A-Akkordgriffe." : "Expand the major scale, fifth-string roots, and movable A-shape chords."}</small></div></li>
+          <li><span>03</span><div><strong>{language === "de" ? "Tonart aus einer Aufnahme bestimmen" : "Identify and verify a key from a recording"}</strong><small>{language === "de" ? "Gleiche Grundton, Ruhepunkte, Bass und Akkorde miteinander ab." : "Cross-check the tonic, resting points, bass, and chords."}</small></div></li>
+          <li><span>04</span><div><strong>{language === "de" ? "Von der Melodie zu Akkorden und Begleitung" : "Expand from melody to chords and accompaniment"}</strong><small>{language === "de" ? "Übe Bass, Akkordqualitäten, Umkehrungen und acht Takte." : "Work on bass, chord qualities, inversions, and eight-bar sections."}</small></div></li>
+          <li><span>05</span><div><strong>{language === "de" ? "Songs vollständig und schneller heraushören" : "Transcribe complete songs at higher speed"}</strong><small>{language === "de" ? "Verbinde Melodie, Akkorde, Rhythmus und Griffbrettpositionen." : "Connect melody, chords, rhythm, and fretboard positions."}</small></div></li>
         </ol>
       </section>
     </div>

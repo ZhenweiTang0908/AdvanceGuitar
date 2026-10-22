@@ -10,8 +10,10 @@ import { getExercise } from "../data/exercises";
 import { weakestDomain } from "../progress/logic";
 import { completedExerciseIds } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
+import { useI18n } from "../i18n";
 
 export function DayPage() {
+  const { t } = useI18n();
   const params = useParams();
   const dayNumber = Number(params.day);
   const day = getCurriculumDay(dayNumber);
@@ -27,7 +29,7 @@ export function DayPage() {
   if (!day) {
     return (
       <div className="page">
-        <PageHeader eyebrow="Day not found" title="这一天的课程还没有内容" actions={<Link className="button button--secondary" to="/stage/1"><ArrowLeft size={16} />返回课程</Link>} />
+        <PageHeader eyebrow={t("notFound")} title={t("dayNotFound")} actions={<Link className="button button--secondary" to="/stage/1"><ArrowLeft size={16} />{t("backToCurriculum")}</Link>} />
       </div>
     );
   }
@@ -44,8 +46,8 @@ export function DayPage() {
         <div className="picko-bubble">
           <p>
             {isTodayAllDone
-              ? "太棒了，今天的练习全部通关！别忘了在下方写写复盘，把难点记下来。"
-              : "今天重点攻克声音与指板位置，跟着耳朵慢慢找，弹错也没关系！"}
+              ? t("doneToday")
+              : t("homeDescription")}
           </p>
         </div>
       </div>
@@ -54,39 +56,39 @@ export function DayPage() {
         eyebrow={`Week ${day.week} · Day ${day.day}`}
         title={day.title}
         description={day.goal}
-        actions={<Link className="button button--secondary" to="/stage/1"><ArrowLeft size={16} />课程总览</Link>}
+        actions={<Link className="button button--secondary" to="/stage/1"><ArrowLeft size={16} />{t("allLessons")}</Link>}
       />
       <div className="day-meta-row">
-        <span><Clock3 aria-hidden="true" size={16} />约 {day.minutes} 分钟</span>
-        <span><Music2 aria-hidden="true" size={16} />{day.newNotes.length > 0 ? `今日音：${day.newNotes.join("、")}` : "复习与验收"}</span>
-        {day.songTask ? <span>包含自选歌曲片段</span> : null}
+        <span><Clock3 aria-hidden="true" size={16} />{t("aboutMinutes", { count: day.minutes })}</span>
+        <span><Music2 aria-hidden="true" size={16} />{day.newNotes.length > 0 ? t("todaysNotes", { notes: day.newNotes.join(", ") }) : t("reviewAndAssessment")}</span>
+        {day.songTask ? <span>{t("optionalSong")}</span> : null}
       </div>
 
-      <nav className="day-navigation" aria-label="切换课程日">
-        {day.day > 1 ? <Link className="button button--secondary" to={`/day/${day.day - 1}`}><ArrowLeft size={16} />上一天</Link> : <span />}
+      <nav className="day-navigation" aria-label={t("curriculum")}>
+        {day.day > 1 ? <Link className="button button--secondary" to={`/day/${day.day - 1}`}><ArrowLeft size={16} />{t("previousDay")}</Link> : <span />}
         {day.day < 28
-          ? <Link className="button button--secondary" to={`/day/${day.day + 1}`}>下一天<ArrowRight size={16} /></Link>
-          : <Link className="button button--primary" to="/progress">阶段进度<ArrowRight size={16} /></Link>}
+          ? <Link className="button button--secondary" to={`/day/${day.day + 1}`}>{t("nextDay")}<ArrowRight size={16} /></Link>
+          : <Link className="button button--primary" to="/progress">{t("progress")}<ArrowRight size={16} /></Link>}
       </nav>
 
       <section className="content-section">
         <div className="section-heading">
-          <div><p className="eyebrow">Guided practice</p><h2>今天的练习入口</h2></div>
+          <div><p className="eyebrow">{t("guidedPractice")}</p><h2>{t("todaysExercises")}</h2></div>
           <span className="status-chip">{exercises.filter((exercise) => completed.has(exercise.id)).length} / {exercises.length}</span>
         </div>
         <div className="exercise-list">
           {exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} completed={completed.has(exercise.id)} />)}
-          {remedial ? <Link className={`exercise-card remedial-card${completed.has(remedial) ? " is-complete" : ""}`} to={`/exercise/${remedial}?day=${dayNumber}`}><span className="exercise-card__status">＋</span><span className="exercise-card__copy"><small>自适应</small><strong>今日补弱</strong><span>根据错误率、尝试次数和用时选择最弱训练域。</span></span><span className="exercise-card__meta">进入</span></Link> : null}
+          {remedial ? <Link className={`exercise-card remedial-card${completed.has(remedial) ? " is-complete" : ""}`} to={`/exercise/${remedial}?day=${dayNumber}`}><span className="exercise-card__status">＋</span><span className="exercise-card__copy"><small>{t("adaptive")}</small><strong>{t("remedialToday")}</strong><span>{t("notesDescription")}</span></span><span className="exercise-card__meta">{t("enter")}</span></Link> : null}
         </div>
       </section>
 
       <details className="study-notes">
-        <summary>要点速览 <span>展开说明</span></summary>
+        <summary>{t("keyPoints")} <span>{t("expand")}</span></summary>
         <div className="study-notes__body"><MarkdownView markdown={day.body} /></div>
       </details>
 
       <details className="study-notes reflection-notes" open={Boolean(snapshot.dailyLogs[day.day]?.completedAt)}>
-        <summary>训练备注 <span>选填</span></summary>
+        <summary>{t("reflection")} <span>{t("optional")}</span></summary>
         <div className="study-notes__body"><DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={handleDailyLogSave} /></div>
       </details>
     </div>

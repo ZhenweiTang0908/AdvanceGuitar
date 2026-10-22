@@ -1,23 +1,24 @@
 import { AudioLines, BookOpen, ChartNoAxesCombined, CircleHelp, Library, Settings } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { MascotPicko } from "./MascotPicko";
-
-const primaryNavigation: readonly { to: string; label: string; icon: typeof AudioLines; end?: boolean }[] = [
-  { to: "/", label: "今天", icon: AudioLines, end: true },
-  { to: "/stage/1", label: "课程", icon: BookOpen },
-  { to: "/library", label: "练习库", icon: Library },
-  { to: "/progress", label: "进度", icon: ChartNoAxesCombined },
-];
+import { useI18n } from "../i18n";
 
 export function AppShell() {
+  const { t } = useI18n();
+  const primaryNavigation: readonly { to: string; label: string; icon: typeof AudioLines; end?: boolean }[] = [
+    { to: "/", label: t("today"), icon: AudioLines, end: true },
+    { to: "/stage/1", label: t("curriculum"), icon: BookOpen },
+    { to: "/library", label: t("library"), icon: Library },
+    { to: "/progress", label: t("progress"), icon: ChartNoAxesCombined },
+  ];
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <NavLink className="brand" to="/" aria-label="听见指板首页">
+        <NavLink className="brand" to="/" aria-label={t("brand")}>
           <MascotPicko mood="cheer" size={38} />
-          <span><strong>听见指板</strong><small>PICKO EAR LAB</small></span>
+          <span><strong>{t("brand")}</strong><small>PICKO EAR LAB</small></span>
         </NavLink>
-        <nav className="primary-nav" aria-label="主导航">
+        <nav className="primary-nav" aria-label={t("curriculum")}>
           {primaryNavigation.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}>
               <Icon aria-hidden="true" size={19} />
@@ -26,9 +27,9 @@ export function AppShell() {
           ))}
         </nav>
         <div className="sidebar__footer">
-          <NavLink to="/settings"><Settings aria-hidden="true" size={18} />设置</NavLink>
+          <NavLink to="/settings"><Settings aria-hidden="true" size={18} />{t("settings")}</NavLink>
           <a href="https://college.berklee.edu/ear-training/ear-training-core" target="_blank" rel="noreferrer">
-            <CircleHelp aria-hidden="true" size={18} />训练理念
+            <CircleHelp aria-hidden="true" size={18} />{t("trainingApproach")}
           </a>
         </div>
       </aside>

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useI18n } from "../i18n";
 
 export type PickoMood = "cheer" | "listen" | "celebrate" | "wink";
 
@@ -109,20 +110,13 @@ export function MascotPicko({ mood = "cheer", size = 80, speech, className = "" 
   );
 }
 
-const RANDOM_TIPS = [
-  "今天耳朵借你用 5 分钟，剩下的靠手感！",
-  "弹错没关系，琴弦知道你在找它。",
-  "听不清时先哼出来，声音有了位置就有了。",
-  "哪怕只练 10 分钟，指尖也记住了音色。",
-  "多邻国练口语，咱们在这里把耳朵练灵！",
-  "先听大方向，再扣细节，不用碰运气。",
-];
-
 export function usePickoQuote(initialIndex?: number): string {
+  const { t } = useI18n();
+  const tips = useMemo(() => [t("picko1"), t("picko2"), t("picko3"), t("picko4"), t("picko5"), t("picko6")], [t]);
   return useMemo(() => {
     if (typeof initialIndex === "number") {
-      return RANDOM_TIPS[initialIndex % RANDOM_TIPS.length];
+      return tips[initialIndex % tips.length];
     }
-    return RANDOM_TIPS[Math.floor(Math.random() * RANDOM_TIPS.length)];
-  }, [initialIndex]);
+    return tips[Math.floor(Math.random() * tips.length)];
+  }, [initialIndex, tips]);
 }

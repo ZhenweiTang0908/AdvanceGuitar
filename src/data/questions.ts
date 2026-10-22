@@ -2,6 +2,7 @@ import { PITCH_NOTES, noteByName, type NoteName, type Timbre } from "../types/mu
 import type { ExerciseDefinition } from "../types/curriculum";
 import { pickSeeded, seededRandom, shuffleSeeded } from "./random";
 import { phrasesFor } from "./phraseBank";
+import type { Language } from "../i18n";
 
 export interface NoteQuestion {
   id: string;
@@ -71,20 +72,20 @@ const SIXTH_STRING_ROOTS = [
   { note: "E", fret: 12 },
 ] as const;
 
-export function buildFretboardQuestions(exercise: ExerciseDefinition): FretboardQuestion[] {
+export function buildFretboardQuestions(exercise: ExerciseDefinition, language: Language = "en"): FretboardQuestion[] {
   const prompts: FretboardQuestion[] = [];
 
   for (const noteName of SECOND_STRING_NOTES) {
     const note = noteByName(noteName);
     prompts.push({
       id: `${exercise.id}-fret-${noteName}-to-fret`,
-      prompt: `第二弦的 ${noteName} 在第几品？`,
+      prompt: language === "de" ? `Auf welchem Bund liegt ${noteName} auf der zweiten Saite?` : `Which fret is ${noteName} on the second string?`,
       answer: String(note.secondStringFret),
       choices: ["1", "3", "5", "8", "10"],
     });
     prompts.push({
       id: `${exercise.id}-fret-${noteName}-to-name`,
-      prompt: `第二弦第 ${note.secondStringFret} 品是什么音？`,
+      prompt: language === "de" ? `Welcher Ton liegt am ${note.secondStringFret}. Bund der zweiten Saite?` : `Which note is at fret ${note.secondStringFret} on the second string?`,
       answer: noteName,
       choices: SECOND_STRING_NOTES,
     });
@@ -93,7 +94,7 @@ export function buildFretboardQuestions(exercise: ExerciseDefinition): Fretboard
   for (const root of SIXTH_STRING_ROOTS) {
     prompts.push({
       id: `${exercise.id}-root-${root.note}`,
-      prompt: `第六弦第 ${root.fret} 品的根音音名是什么？`,
+      prompt: language === "de" ? `Welcher Grundton liegt am ${root.fret}. Bund der sechsten Saite?` : `What is the root note at fret ${root.fret} on the sixth string?`,
       answer: root.note,
       choices: ["F", "G", "A", "B", "C", "D", "E"],
     });
@@ -107,7 +108,7 @@ export function buildFretboardQuestions(exercise: ExerciseDefinition): Fretboard
 
 const CHORD_ROOTS = ["F", "G", "A", "B", "C", "D", "E"] as const;
 
-export function buildChordQuestions(exercise: ExerciseDefinition): ChordQuestion[] {
+export function buildChordQuestions(exercise: ExerciseDefinition, language: Language = "en"): ChordQuestion[] {
   const random = seededRandom(`${exercise.id}:chords:${exercise.assessment ? "reserved" : "daily"}`);
   return Array.from({ length: exercise.rounds }, (_, index) => {
     const root = pickSeeded(CHORD_ROOTS, random);
@@ -116,9 +117,9 @@ export function buildChordQuestions(exercise: ExerciseDefinition): ChordQuestion
     const others = CHORD_ROOTS.filter((candidate) => candidate !== root).slice(0, 3).flatMap((candidate) => [`${candidate}`, `${candidate}m`]);
     return {
       id: `${exercise.id}-chord-${index + 1}`,
-      prompt: isMinor
-        ? `第六弦第 ${SIXTH_STRING_ROOTS.find((item) => item.note === root)?.fret ?? "?"} 品的根音上，使用 Em 型手型。这个和弦是什么？`
-        : `第六弦第 ${SIXTH_STRING_ROOTS.find((item) => item.note === root)?.fret ?? "?"} 品的根音上，使用 E 型手型。这个和弦是什么？`,
+      prompt: language === "de"
+        ? `Verwende den ${isMinor ? "Em" : "E"}-Akkordgriff mit dem Grundton am ${SIXTH_STRING_ROOTS.find((item) => item.note === root)?.fret ?? "?"}. Bund der sechsten Saite. Welcher Akkord ist das?`
+        : `Using the ${isMinor ? "Em" : "E"} shape with its root at fret ${SIXTH_STRING_ROOTS.find((item) => item.note === root)?.fret ?? "?"} on the sixth string, what is the chord?`,
       answer,
       choices: shuffleSeeded([answer, ...others.slice(0, 3)], `${exercise.id}-chord-choices-${index}`),
     };
