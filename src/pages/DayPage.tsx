@@ -1,13 +1,11 @@
 import { ArrowLeft, ArrowRight, Clock3, Music2 } from "lucide-react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { DailyReflection } from "../components/DailyReflection";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { ExerciseCard } from "../components/ExerciseCard";
 import { MarkdownView } from "../components/MarkdownView";
 import { PageHeader } from "../components/PageHeader";
 import { MascotPicko } from "../components/MascotPicko";
 import { getCurriculumDay } from "../content/loadCurriculum";
 import { getExercise } from "../data/exercises";
-import { weakestDomain } from "../progress/logic";
 import { completedExerciseIds } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
 import { useI18n } from "../i18n";
@@ -17,13 +15,7 @@ export function DayPage() {
   const params = useParams();
   const dayNumber = Number(params.day);
   const day = getCurriculumDay(dayNumber, language);
-  const { snapshot, saveDailyLog } = useProgress();
-  const navigate = useNavigate();
-
-  function handleDailyLogSave(log: Parameters<typeof saveDailyLog>[0]) {
-    saveDailyLog(log);
-    navigate(dayNumber < 28 ? `/day/${dayNumber + 1}` : "/progress");
-  }
+  const { snapshot } = useProgress();
 
   if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 28) return <Navigate to="/stage/1" replace />;
   if (!day) {
@@ -35,7 +27,6 @@ export function DayPage() {
   }
 
   const exercises = day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise));
-  const remedial = exercises.length > 0 ? `remedial-${weakestDomain(snapshot.results)}` : undefined;
   const completed = completedExerciseIds(snapshot);
   const isTodayAllDone = exercises.length > 0 && exercises.every((e) => completed.has(e.id));
 
@@ -67,7 +58,7 @@ export function DayPage() {
       <nav className="day-navigation" aria-label={t("curriculum")}>
         {day.day > 1 ? <Link className="button button--secondary" to={`/day/${day.day - 1}`}><ArrowLeft size={16} />{t("previousDay")}</Link> : <span />}
         {day.day < 28
-          ? <Link className="button button--secondary" to={`/day/${day.day + 1}`}>{t("nextDay")}<ArrowRight size={16} /></Link>
+          ? <Link className={`button ${isTodayAllDone ? "button--primary" : "button--secondary"}`} to={`/day/${day.day + 1}`}>{isTodayAllDone ? t("dayFinishedNext", { day: day.day + 1 }) : t("nextDay")}<ArrowRight size={16} /></Link>
           : <Link className="button button--primary" to="/progress">{t("progress")}<ArrowRight size={16} /></Link>}
       </nav>
 
@@ -77,8 +68,7 @@ export function DayPage() {
           <span className="status-chip">{exercises.filter((exercise) => completed.has(exercise.id)).length} / {exercises.length}</span>
         </div>
         <div className="exercise-list">
-          {exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} completed={completed.has(exercise.id)} />)}
-          {remedial ? <Link className={`exercise-card remedial-card${completed.has(remedial) ? " is-complete" : ""}`} to={`/exercise/${remedial}?day=${dayNumber}`}><span className="exercise-card__status">＋</span><span className="exercise-card__copy"><small>{t("adaptive")}</small><strong>{t("remedialToday")}</strong><span>{t("notesDescription")}</span></span><span className="exercise-card__meta">{t("enter")}</span></Link> : null}
+          {exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} completed={completed.has(exercise.id)} day={dayNumber} />)}
         </div>
       </section>
 
@@ -87,10 +77,6 @@ export function DayPage() {
         <div className="study-notes__body"><MarkdownView markdown={day.body} /></div>
       </details>
 
-      <details className="study-notes reflection-notes" open={Boolean(snapshot.dailyLogs[day.day]?.completedAt)}>
-        <summary>{t("reflection")} <span>{t("optional")}</span></summary>
-        <div className="study-notes__body"><DailyReflection day={day.day} initialLog={snapshot.dailyLogs[day.day]} onSave={handleDailyLogSave} /></div>
-      </details>
     </div>
   );
 }

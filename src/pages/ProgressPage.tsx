@@ -1,6 +1,5 @@
 import { Activity, Download, Gauge, Target, Upload } from "lucide-react";
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { StatCard } from "../components/StatCard";
 import { calculateStreak, domainStats } from "../progress/logic";
@@ -49,7 +48,7 @@ export function ProgressPage() {
       <section className="stat-grid">
         <StatCard icon={Target} label={t("completedDays")} value={`${completedDayCount(snapshot)} / 28`} note={t("fixedPracticeNote")} />
         <StatCard icon={Gauge} label={t("accuracy")} value={total > 0 ? `${Math.round((correct / total) * 100)}%` : "—"} note={`${correct} / ${total} ${t("answeredRounds")}`} />
-        <StatCard icon={Activity} label={t("averageAttempts")} value={total > 0 ? averageAttempts.toFixed(1) : "—"} note={t("consecutiveDays", { count: calculateStreak(snapshot.dailyLogs) })} />
+        <StatCard icon={Activity} label={t("averageAttempts")} value={total > 0 ? averageAttempts.toFixed(1) : "—"} note={t("consecutiveDays", { count: calculateStreak(snapshot.dailyLogs, new Date(), snapshot.results.map((result) => result.createdAt)) })} />
       </section>
 
       <section className="content-section">
@@ -78,11 +77,6 @@ export function ProgressPage() {
             return <article className={check.passed ? "is-complete" : ""} key={check.domain}><strong>{t(check.domain === "ear" ? "skillEar" : check.domain === "phrase" ? "skillPhrase" : check.domain === "fretboard" ? "skillFretboard" : "skillChord")}</strong><span>{t(detailKey, { count })}</span><small>{check.passed ? t("pass") : t("keepPracticing")}</small></article>;
           })}
         </div>
-        {acceptance.status === "needs_review" ? (
-          <div className="button-row">
-            {acceptance.remedialPackage.map((domain) => <Link className="button button--secondary" to={`/exercise/remedial-${domain}`} key={domain}>{t("threeDayPack", { skill: t(domain === "ear" ? "skillEar" : domain === "phrase" ? "skillPhrase" : domain === "fretboard" ? "skillFretboard" : "skillChord") })}</Link>)}
-          </div>
-        ) : null}
       </section>
 
       <section className="content-section panel data-panel">

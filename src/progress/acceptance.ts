@@ -1,6 +1,7 @@
 import type { ProgressSnapshot } from "../types/progress";
 import type { SkillDomain } from "../types/music";
-import { weakestDomain } from "./logic";
+import { completedExerciseIds } from "./selectors";
+import { getExercisesForDay } from "../data/exercises";
 
 export interface AcceptanceCheck {
   domain: SkillDomain;
@@ -12,7 +13,6 @@ export interface AcceptanceCheck {
 export interface AcceptanceReport {
   status: "active" | "passed" | "needs_review";
   checks: AcceptanceCheck[];
-  remedialPackage: readonly SkillDomain[];
 }
 
 const LABELS: Record<SkillDomain, string> = { ear: "单音", phrase: "短句", fretboard: "指板", chord: "和弦" };
@@ -38,13 +38,10 @@ export function evaluateAcceptance(snapshot: ProgressSnapshot): AcceptanceReport
     { domain: "chord", label: LABELS.chord, passed: chordPassed, detail: `${chord.filter((result) => result.correct).length} / 5 推导正确` },
   ];
 
-  const hasFinalDay = Boolean(snapshot.dailyLogs[28]?.completedAt);
+  const done = completedExerciseIds(snapshot);
+  const hasFinalDay = getExercisesForDay(28).every((exercise) => done.has(exercise.id));
   const allPassed = checks.every((check) => check.passed);
   const status = hasFinalDay ? (allPassed ? "passed" : "needs_review") : "active";
-  const remedialPackage = [...new Set([
-    weakestDomain(snapshot.results),
-    checks.filter((check) => !check.passed).sort((first, second) => Number(first.passed) - Number(second.passed))[0]?.domain ?? "phrase",
-  ])].slice(0, 2);
 
-  return { status, checks, remedialPackage };
+  return { status, checks };
 }

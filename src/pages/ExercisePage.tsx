@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, Headphones, Mic, RotateCcw, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MascotPicko } from "../components/MascotPicko";
 import { playChord, playFeedbackSound, playTimedSequence, playTone, resumeAudio } from "../audio/engine";
 import { isWithinTolerance } from "../audio/pitchDetection";
@@ -12,6 +12,7 @@ import { useMicrophoneSpaceToggle } from "../hooks/useMicrophoneSpaceToggle";
 import { midiForRootName, noteByName, PITCH_NOTES, type NoteName } from "../types/music";
 import type { ExerciseDefinition } from "../types/curriculum";
 import { useProgress } from "../progress/ProgressProvider";
+import { nextExerciseForDay } from "../progress/selectors";
 import { useI18n } from "../i18n";
 
 interface RoundOutcome {
@@ -19,16 +20,46 @@ interface RoundOutcome {
   attempts: number;
 }
 
+const SESSION_KEY = "advance-guitar:exercise-session:v1";
+
+interface StoredSession { key: string; roundIndex: number; scores: boolean[] }
+
+function loadSession(key: string): StoredSession | undefined {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SESSION_KEY) ?? "null") as StoredSession | null;
+    return parsed && parsed.key === key && Array.isArray(parsed.scores) && parsed.roundIndex > 0 ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function storeSession(session: StoredSession | null) {
+  try {
+    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    else localStorage.removeItem(SESSION_KEY);
+  } catch { /* Resume is a convenience only. */ }
+}
+
+/** Keyed by exercise and day so moving to another exercise starts from a clean state. */
 export function ExercisePage() {
+  const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  return <ExerciseSession key={`${id}:${searchParams.get("day") ?? ""}`} />;
+}
+
+function ExerciseSession() {
   const { t } = useI18n();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const exercise = id ? getExercise(id) : undefined;
   const { recordResult, snapshot } = useProgress();
+  const contextDay = Number(searchParams.get("day")) || exercise?.day || 0;
+  const sessionKey = `${id}:${contextDay}`;
+  const [resumed] = useState(() => loadSession(sessionKey));
   const startedAt = useRef(Date.now());
-  const [roundIndex, setRoundIndex] = useState(0);
+  const [roundIndex, setRoundIndex] = useState(resumed?.roundIndex ?? 0);
   const [finished, setFinished] = useState(false);
-  const [roundScores, setRoundScores] = useState<boolean[]>([]);
+  const [roundScores, setRoundScores] = useState<boolean[]>(resumed?.scores ?? []);
   const microphone = usePitchCapture();
   const supportsMicrophone = exercise?.skill === "ear" || exercise?.skill === "phrase";
 
@@ -42,9 +73,7 @@ export function ExercisePage() {
   if (!exercise) {
     return <Navigate to="/library" replace />;
   }
-  const exerciseTitle = exercise.remedial
-    ? t(exercise.skill === "ear" ? "notesSingle" : exercise.skill === "phrase" ? "notesPhrase" : exercise.skill === "fretboard" ? "notesFretboard" : "notesChord")
-    : exercise.skill === "ear" ? t("skillEar")
+  const exerciseTitle = exercise.skill === "ear" ? t("skillEar")
     : exercise.skill === "phrase" ? (exercise.day >= 20 ? t("sixNotePhrases") : t("skillPhrase"))
     : exercise.skill === "fretboard" ? t("skillFretboard") : t("skillChord");
 
@@ -57,7 +86,7 @@ export function ExercisePage() {
 
     recordResult({
       exerciseId: exercise!.id,
-      day: Number(searchParams.get("day")) || exercise!.day,
+      day: contextDay,
       skill: exercise!.skill,
       correct: outcome.correct,
       attempts: outcome.attempts,
@@ -68,9 +97,11 @@ export function ExercisePage() {
     startedAt.current = Date.now();
     if (roundIndex + 1 >= exercise!.rounds) {
       setFinished(true);
+      storeSession(null);
       playFeedbackSound("complete", snapshot.settings.volume);
     } else {
-      setRoundIndex((current) => current + 1);
+      setRoundIndex(roundIndex + 1);
+      storeSession({ key: sessionKey, roundIndex: roundIndex + 1, scores: nextScores });
     }
   }
 
@@ -78,6 +109,7 @@ export function ExercisePage() {
     setRoundIndex(0);
     setFinished(false);
     setRoundScores([]);
+    storeSession(null);
     startedAt.current = Date.now();
   }
 
@@ -91,19 +123,19 @@ export function ExercisePage() {
   return (
     <div className="page exercise-page">
       <PageHeader
-        eyebrow={exercise.remedial ? t("adaptivePractice") : t("weekDay", { week: Math.ceil(exercise.day / 7), day: exercise.day })}
+        eyebrow={t("weekDay", { week: Math.ceil(exercise.day / 7), day: exercise.day })}
         title={exerciseTitle}
-        actions={<Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}><ArrowLeft size={16} />{t("goBack")}</Link>}
+        actions={<Link className="button button--secondary" to={contextDay > 0 ? `/day/${contextDay}` : "/library"}><ArrowLeft size={16} />{t("goBack")}</Link>}
       />
       {finished ? (
-        <CompletionPanel exercise={exercise} scores={roundScores} onRestart={restart} />
+        <CompletionPanel exercise={exercise} day={contextDay} scores={roundScores} onRestart={restart} />
       ) : (
         <>
           <div className="round-progress">
             <span style={{ width: `${((roundIndex + 1) / exercise.rounds) * 100}%` }} />
           </div>
           <div className="round-info-bar">
-            <p className="round-label">{t("round", { current: roundIndex + 1, total: exercise.rounds })}</p>
+            <p className="round-label">{t("round", { current: roundIndex + 1, total: exercise.rounds })}{resumed && roundIndex === resumed.roundIndex ? ` · ${t("resumed")}` : ""}</p>
             {currentStreak >= 2 ? (
               <span className="combo-badge">{t("streakCorrect", { count: currentStreak })}</span>
             ) : null}
@@ -115,9 +147,25 @@ export function ExercisePage() {
   );
 }
 
-function CompletionPanel({ exercise, scores, onRestart }: { exercise: ExerciseDefinition; scores: readonly boolean[]; onRestart: () => void }) {
+function CompletionPanel({ exercise, day, scores, onRestart }: { exercise: ExerciseDefinition; day: number; scores: readonly boolean[]; onRestart: () => void }) {
   const { t } = useI18n();
+  const { snapshot } = useProgress();
+  const navigate = useNavigate();
   const correct = scores.filter(Boolean).length;
+  const nextId = day > 0 ? nextExerciseForDay(snapshot, day, exercise.id) : undefined;
+  const primaryTarget = nextId ? `/exercise/${nextId}?day=${day}` : day > 0 ? `/day/${day}` : "/library";
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Enter" || event.repeat || event.defaultPrevented) return;
+      if (event.target instanceof HTMLElement && ["BUTTON", "A", "INPUT", "TEXTAREA"].includes(event.target.tagName)) return;
+      event.preventDefault();
+      navigate(primaryTarget);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate, primaryTarget]);
+
   return (
     <section className="panel completion-panel">
       <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}>
@@ -127,8 +175,10 @@ function CompletionPanel({ exercise, scores, onRestart }: { exercise: ExerciseDe
       <h2>{correct === scores.length ? t("perfectRun") : t("performPractice", { count: scores.length })}</h2>
       <p>{t("roundSummary", { correct, helped: scores.length - correct })}</p>
       <div className="button-row button-row--center">
-        <button className="button button--primary" type="button" onClick={onRestart}><RotateCcw size={16} />{t("practiceAnother")}</button>
-        <Link className="button button--secondary" to={exercise.day > 0 ? `/day/${exercise.day}` : "/library"}>{t("backTo", { page: exercise.day > 0 ? t("today") : t("library") })} <ArrowRight size={16} /></Link>
+        <button className="button button--secondary" type="button" onClick={onRestart}><RotateCcw size={16} />{t("practiceAnother")}</button>
+        <Link className="button button--primary" to={primaryTarget} autoFocus>
+          {nextId ? t("nextExercise") : day > 0 ? t("finishDay") : t("backTo", { page: t("library") })} <ArrowRight size={16} /> <span className="keycap-badge keycap-badge--inverse">Enter</span>
+        </Link>
       </div>
     </section>
   );

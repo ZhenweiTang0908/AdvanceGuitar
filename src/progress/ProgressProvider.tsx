@@ -1,11 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { ExerciseResult, DailyLog, ProgressSnapshot, UserSettings } from "../types/progress";
+import type { ExerciseResult, ProgressSnapshot, UserSettings } from "../types/progress";
 import { createEmptySnapshot, loadSnapshot, saveSnapshot, validateSnapshot } from "./logic";
 
 interface ProgressContextValue {
   snapshot: ProgressSnapshot;
   recordResult: (result: Omit<ExerciseResult, "id" | "createdAt">) => void;
-  saveDailyLog: (log: DailyLog) => void;
   updateSettings: (patch: Partial<UserSettings>) => void;
   exportProgress: () => void;
   importProgress: (value: unknown) => { ok: boolean; error?: string };
@@ -29,10 +28,6 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         { ...result, id: `${result.exerciseId}-${Date.now()}-${current.results.length + 1}`, createdAt: new Date().toISOString() },
       ],
     }));
-  }, []);
-
-  const saveDailyLog = useCallback((log: DailyLog) => {
-    setSnapshot((current) => ({ ...current, dailyLogs: { ...current.dailyLogs, [log.day]: log } }));
   }, []);
 
   const updateSettings = useCallback((patch: Partial<UserSettings>) => {
@@ -64,12 +59,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ProgressContextValue>(() => ({
     snapshot,
     recordResult,
-    saveDailyLog,
     updateSettings,
     exportProgress,
     importProgress,
     resetProgress,
-  }), [exportProgress, importProgress, recordResult, resetProgress, saveDailyLog, snapshot, updateSettings]);
+  }), [exportProgress, importProgress, recordResult, resetProgress, snapshot, updateSettings]);
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
 }

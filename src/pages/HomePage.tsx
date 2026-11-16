@@ -5,15 +5,17 @@ import { PageHeader } from "../components/PageHeader";
 import { MascotPicko, usePickoQuote } from "../components/MascotPicko";
 import { getCurriculumDay } from "../content/loadCurriculum";
 import { getExercise, getExercisesForDay } from "../data/exercises";
-import { calculateStreak, nextRecommendedDay } from "../progress/logic";
-import { completedDayCount, completedExerciseIds, dayCompletion } from "../progress/selectors";
+import { calculateStreak } from "../progress/logic";
+import { completedDayCount, completedExerciseIds, currentDay, dayCompletion, nextExerciseForDay } from "../progress/selectors";
 import { useProgress } from "../progress/ProgressProvider";
 import { useI18n } from "../i18n";
 
 export function HomePage() {
   const { t, language } = useI18n();
   const { snapshot } = useProgress();
-  const nextDay = nextRecommendedDay(snapshot.dailyLogs);
+  const nextDay = currentDay(snapshot);
+  const nextExerciseId = nextExerciseForDay(snapshot, nextDay);
+  const startedToday = snapshot.results.some((result) => result.day === nextDay);
   const day = getCurriculumDay(nextDay, language);
   const exercises = day
     ? day.exerciseIds.map((id) => getExercise(id)).filter((exercise): exercise is NonNullable<typeof exercise> => Boolean(exercise))
@@ -46,15 +48,13 @@ export function HomePage() {
         title={day ? `${t("day", { day: nextDay })} · ${day.title}` : t("homeTitle")}
         description={day?.goal}
         actions={
-          isTodayExercisesDone && nextDay < 28 ? (
-            <Link className="button button--primary" to={`/day/${nextDay + 1}`} style={{ fontSize: "1.05rem", padding: "0.85rem 1.6rem" }}>
-              {t("continueDay", { day: nextDay + 1 })} <ArrowRight aria-hidden="true" size={18} />
-            </Link>
-          ) : (
-            <Link className="button button--primary" to={`/day/${nextDay}`} style={{ fontSize: "1.05rem", padding: "0.85rem 1.6rem" }}>
-              {t("start60")} <ArrowRight aria-hidden="true" size={18} />
-            </Link>
-          )
+          <Link
+            className="button button--primary"
+            to={nextExerciseId && !isTodayExercisesDone ? `/exercise/${nextExerciseId}?day=${nextDay}` : `/day/${nextDay}`}
+            style={{ fontSize: "1.05rem", padding: "0.85rem 1.6rem" }}
+          >
+            {startedToday ? t("continueDay", { day: nextDay }) : t("start60")} <ArrowRight aria-hidden="true" size={18} />
+          </Link>
         }
       />
 
@@ -65,7 +65,7 @@ export function HomePage() {
         </div>
         <div className="duo-progress-pill">
           <Flame size={16} color="var(--color-brand)" />
-          <span>{t("streak", { count: calculateStreak(snapshot.dailyLogs) })}</span>
+          <span>{t("streak", { count: calculateStreak(snapshot.dailyLogs, new Date(), snapshot.results.map((result) => result.createdAt)) })}</span>
         </div>
         <div className={`duo-progress-pill${completion.complete ? " duo-progress-pill--success" : ""}`}>
           <span>{t("todayProgress", { done: completion.completed, total: completion.total })}</span>
@@ -78,7 +78,7 @@ export function HomePage() {
           <span className="status-chip">{completion.complete ? t("completed") : isTodayExercisesDone ? t("practiceDone") : t("minutes60")}</span>
         </div>
         <div className="exercise-list">
-          {exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} completed={completed.has(exercise.id)} />)}
+          {exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} completed={completed.has(exercise.id)} day={nextDay} />)}
         </div>
       </section>
     </div>

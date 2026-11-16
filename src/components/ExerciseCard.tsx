@@ -6,16 +6,15 @@ import { useI18n } from "../i18n";
 interface ExerciseCardProps {
   exercise: ExerciseDefinition;
   completed?: boolean;
+  day?: number;
 }
 
-export function ExerciseCard({ exercise, completed = false }: ExerciseCardProps) {
+export function ExerciseCard({ exercise, completed = false, day }: ExerciseCardProps) {
   const { t } = useI18n();
   const skillLabel = exercise.skill === "ear" ? t("skillEar") : exercise.skill === "phrase" ? t("skillPhrase") : exercise.skill === "fretboard" ? t("skillFretboard") : t("skillChord");
-  const title = exercise.remedial
-    ? t(exercise.skill === "ear" ? "notesSingle" : exercise.skill === "phrase" ? "notesPhrase" : exercise.skill === "fretboard" ? "notesFretboard" : "notesChord")
-    : skillLabel;
+  const title = skillLabel;
   return (
-    <Link className={`exercise-card${completed ? " is-complete" : ""}`} to={`/exercise/${exercise.id}`}>
+    <Link className={`exercise-card${completed ? " is-complete" : ""}`} to={`/exercise/${exercise.id}${day ? `?day=${day}` : ""}`}>
       <span className="exercise-card__status">
         {completed ? <CheckCircle2 aria-hidden="true" size={18} /> : <Circle aria-hidden="true" size={18} />}
       </span>

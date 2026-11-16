@@ -22,9 +22,9 @@ export function createEmptySnapshot(): ProgressSnapshot {
 
 export function loadSnapshot(storage: Storage | undefined = globalThis.localStorage): ProgressSnapshot {
   if (!storage) return createEmptySnapshot();
-  const raw = storage.getItem(STORAGE_KEY);
-  if (!raw) return createEmptySnapshot();
   try {
+    const raw = storage.getItem(STORAGE_KEY);
+    if (!raw) return createEmptySnapshot();
     const parsed = validateSnapshot(JSON.parse(raw));
     return parsed.ok && parsed.snapshot ? parsed.snapshot : createEmptySnapshot();
   } catch {
@@ -33,7 +33,11 @@ export function loadSnapshot(storage: Storage | undefined = globalThis.localStor
 }
 
 export function saveSnapshot(snapshot: ProgressSnapshot, storage: Storage | undefined = globalThis.localStorage): void {
-  storage?.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  try {
+    storage?.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  } catch {
+    // Storage may be full or blocked (private mode); progress still lives in memory for this session.
+  }
 }
 
 export function validateSnapshot(value: unknown): ImportResult {
@@ -88,10 +92,12 @@ function scoreDomain(stats: { attempts: number; errors: number; durationMs: numb
   return errorRate * 0.6 + Math.min(averageAttempts / 4, 1.5) * 0.25 + normalizedDuration * 0.15;
 }
 
-export function calculateStreak(logs: Record<number, DailyLog>, today = new Date()): number {
-  const completedDays = Object.values(logs)
-    .filter((log) => log.completedAt)
-    .map((log) => new Date(log.completedAt as string).toISOString().slice(0, 10))
+export function calculateStreak(logs: Record<number, DailyLog>, today = new Date(), practiceDates: readonly string[] = []): number {
+  const completedDays = [
+    ...Object.values(logs).filter((log) => log.completedAt).map((log) => log.completedAt as string),
+    ...practiceDates,
+  ]
+    .map((date) => new Date(date).toISOString().slice(0, 10))
     .sort();
   if (completedDays.length === 0) return 0;
   const unique = [...new Set(completedDays)];
@@ -107,9 +113,3 @@ export function calculateStreak(logs: Record<number, DailyLog>, today = new Date
   return streak;
 }
 
-export function nextRecommendedDay(logs: Record<number, DailyLog>): number {
-  for (let day = 1; day <= 28; day += 1) {
-    if (!logs[day]?.completedAt) return day;
-  }
-  return 28;
-}

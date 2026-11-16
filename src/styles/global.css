@@ -248,8 +248,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .study-notes summary::-webkit-details-marker { display: none; }
 .study-notes summary span { color: var(--color-text-muted); font-size: 0.82rem; font-weight: 750; }
 .study-notes__body { padding: 0 var(--space-5) var(--space-5); border-top: 2px solid var(--color-border); }
-.reflection { margin-top: var(--space-4); }
-.reflection-notes .reflection { margin-top: 0; border: 0; padding: 0; }
 .two-column { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, 0.75fr); gap: var(--space-4); align-items: start; }
 .panel { padding: var(--space-5); border: 2px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: 0 4px 0 var(--color-border-shade); }
 .panel--accent { background: #ffffff; border-color: var(--color-brand); box-shadow: 0 4px 0 var(--color-brand-shade); }
@@ -373,7 +371,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .prose th { color: var(--color-text); background: var(--color-surface-subtle); }
 .prose code { padding: 0.1rem 0.3rem; border-radius: 5px; background: var(--color-surface-subtle); }
 .prose blockquote { margin: var(--space-4) 0; padding: var(--space-3) var(--space-4); border-left: 3px solid var(--color-action); color: var(--color-text-muted); background: var(--color-surface-subtle); }
-.reflection { display: grid; gap: var(--space-4); }
 .round-progress {
   height: 14px;
   overflow: hidden;

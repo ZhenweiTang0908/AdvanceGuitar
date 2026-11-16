@@ -24,5 +24,4 @@ export interface ExerciseDefinition {
   phraseLength: number;
   timbres: readonly Timbre[];
   assessment: boolean;
-  remedial: boolean;
 }
