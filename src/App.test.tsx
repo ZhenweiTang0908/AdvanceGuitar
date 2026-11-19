@@ -36,14 +36,14 @@ describe("application routes", () => {
     expect(screen.getByRole("heading", { name: /Day 2 · Correct by direction instead of guessing/ })).toBeInTheDocument();
   });
 
-  it("opens the first-stage curriculum route", () => {
+  it("opens the first-stage curriculum route", async () => {
     renderAt("/stage/1");
-    expect(screen.getByRole("heading", { name: "Connect sound to a small area of the fretboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Connect sound to a small area of the fretboard" })).toBeInTheDocument();
   });
 
-  it("links to the next day and shows no reflection form", () => {
+  it("links to the next day and shows no reflection form", async () => {
     renderAt("/day/1");
-    expect(screen.getByRole("link", { name: /Next day/ })).toHaveAttribute("href", "/day/2");
+    expect(await screen.findByRole("link", { name: /Next day/ })).toHaveAttribute("href", "/day/2");
     expect(screen.queryByRole("button", { name: "Save notes" })).not.toBeInTheDocument();
   });
 });

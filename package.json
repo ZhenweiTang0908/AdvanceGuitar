@@ -12,9 +12,15 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "validate:content": "node scripts/validate-content.mjs",
-    "check": "npm run validate:content && npm run lint && npm run test && npm run build"
+    "check": "npm run validate:content && npm run lint && npm run test && npm run build",
+    "mobile:sync": "npm run build && cap sync",
+    "mobile:ios": "npm run mobile:sync && cap open ios",
+    "mobile:android": "npm run mobile:sync && cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "lucide-react": "^1.49.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -23,6 +29,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",

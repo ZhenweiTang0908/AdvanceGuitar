@@ -4,7 +4,7 @@ let sharedContext: AudioContext | undefined;
 
 export function getAudioContext(): AudioContext {
   if (typeof window === "undefined" || !("AudioContext" in window)) {
-    throw new Error("当前浏览器不支持 Web Audio API");
+    throw new Error("Web Audio API is not supported in this browser");
   }
   if (!sharedContext || sharedContext.state === "closed") {
     sharedContext = new AudioContext({ latencyHint: "interactive" });

@@ -1,12 +1,14 @@
+import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
-import { DayPage } from "./pages/DayPage";
-import { ExercisePage } from "./pages/ExercisePage";
 import { HomePage } from "./pages/HomePage";
-import { LibraryPage } from "./pages/LibraryPage";
-import { ProgressPage } from "./pages/ProgressPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { StagePage } from "./pages/StagePage";
+
+const StagePage = lazy(() => import("./pages/StagePage").then((m) => ({ default: m.StagePage })));
+const DayPage = lazy(() => import("./pages/DayPage").then((m) => ({ default: m.DayPage })));
+const ExercisePage = lazy(() => import("./pages/ExercisePage").then((m) => ({ default: m.ExercisePage })));
+const LibraryPage = lazy(() => import("./pages/LibraryPage").then((m) => ({ default: m.LibraryPage })));
+const ProgressPage = lazy(() => import("./pages/ProgressPage").then((m) => ({ default: m.ProgressPage })));
+const SettingsPage = lazy(() => import("./pages/SettingsPage").then((m) => ({ default: m.SettingsPage })));
 
 export function App() {
   return (

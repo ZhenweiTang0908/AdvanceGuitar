@@ -20,6 +20,18 @@ npm run test:e2e
 
 `npm run check` validates the 28 curriculum Markdown files, runs ESLint and unit tests, and creates a production build. End-to-end tests cover the main desktop and mobile flows.
 
+## Mobile app (iOS / Android)
+
+The native apps wrap the same web build with [Capacitor](https://capacitorjs.com), so every feature and fix lands on web, iOS, and Android from one codebase. Native projects live in `ios/` and `android/`; microphone permissions are already declared in both.
+
+```bash
+npm run mobile:sync      # build the web app and copy it into ios/ and android/
+npm run mobile:ios       # sync, then open Xcode (requires full Xcode)
+npm run mobile:android   # sync, then open Android Studio
+```
+
+Run `mobile:sync` after every web change before building a native app.
+
 ## Project structure
 
 - `content/stage-1/`: 28 daily Markdown lessons and their exercise bindings

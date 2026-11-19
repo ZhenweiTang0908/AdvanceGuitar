@@ -1,4 +1,5 @@
 import { AudioLines, BookOpen, ChartNoAxesCombined, CircleHelp, Library, Settings } from "lucide-react";
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { MascotPicko } from "./MascotPicko";
 import { useI18n } from "../i18n";
@@ -34,10 +35,12 @@ export function AppShell() {
         </div>
       </aside>
       <main className="main-content" id="main-content">
-        <Outlet />
+        <Suspense fallback={<div className="page" aria-busy="true" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <nav className="bottom-nav" aria-label={t("mobileNavigation")}>
-        {primaryNavigation.map(({ to, label, icon: Icon, end }) => (
+        {[...primaryNavigation, { to: "/settings", label: t("settings"), icon: Settings }].map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end}>
             <Icon aria-hidden="true" size={20} />
             <span>{label}</span>

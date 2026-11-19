@@ -81,13 +81,19 @@ export function parseMarkdown(markdown: string): { frontmatter: Frontmatter; bod
   };
 }
 
+const parsedCache = new WeakMap<Record<string, string>, readonly CurriculumDay[]>();
+
 function parseDays(source: Record<string, string>): readonly CurriculumDay[] {
-  return Object.entries(source)
+  const cached = parsedCache.get(source);
+  if (cached) return cached;
+  const days = Object.entries(source)
   .map(([path, markdown]) => {
     const parsed = parseMarkdown(markdown);
     return { ...parsed.frontmatter, body: parsed.body, path };
   })
   .sort((first, second) => first.day - second.day);
+  parsedCache.set(source, days);
+  return days;
 }
 
 export const curriculumDays: readonly CurriculumDay[] = parseDays(localizedDays.en).length
